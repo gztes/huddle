@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'none';
+        script-src 'self' blob: 'wasm-unsafe-eval' https://cdn.jsdelivr.net;
+        worker-src 'self' blob:;
+        connect-src 'self' blob: data:
+          https://huggingface.co https://*.huggingface.co https://*.hf.co
+          https://cdn.jsdelivr.net;
+        media-src 'self' blob:
+      "
+    />
+    <title>Huddle Capture Host</title>
+  </head>
+  <body>
+    <!--
+      This window is never shown. It exists only to host the Web Audio and
+      getDisplayMedia APIs (mic + system-audio-loopback capture, Silero VAD,
+      local Whisper transcription) that the main process can't use directly.
+      See src/main/captureWindow.ts for why.
+    -->
+    <script src="capture.js"></script>
+  </body>
+</html>

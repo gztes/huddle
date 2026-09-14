@@ -1,0 +1,299 @@
+/*
+ * Glassmorphic HUD — a pill-shaped toolbar plus a stack of frosted-glass
+ * cards, in the visual language of Cluely: heavy backdrop blur, translucent
+ * dark surfaces, soft borders, generous rounding. Colour tokens still follow
+ * Clicky's palette (#101211 background family, #3380FF accent).
+ */
+
+:root {
+  --huddle-surface: rgba(18, 19, 18, 0.62);
+  --huddle-surface-solid: #101211;
+  --huddle-border: rgba(255, 255, 255, 0.1);
+  --huddle-border-strong: rgba(255, 255, 255, 0.18);
+  --huddle-text-primary: #f5f6f5;
+  --huddle-text-secondary: #c2c8c5;
+  --huddle-text-tertiary: #868f8b;
+  --huddle-accent: #3380ff;
+  --huddle-them-accent: #ffb264;
+  --huddle-success: #34d399;
+  --huddle-warning: #ffb224;
+  --huddle-destructive-text: #ff7a7f;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  color: var(--huddle-text-primary);
+  user-select: none;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+#hud-root {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  padding: 4px;
+  overflow: hidden;
+  -webkit-app-region: drag;
+}
+
+#hud-root * {
+  -webkit-app-region: no-drag;
+}
+
+/* --------------------------------------------------------------- toolbar --- */
+
+#hud-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--huddle-border-strong);
+  background: var(--huddle-surface);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+#hud-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--huddle-text-tertiary);
+}
+
+#hud-status-dot[data-listening="true"] {
+  background: var(--huddle-success);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+}
+
+#hud-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+#hud-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--huddle-border-strong);
+}
+
+#hud-hotkey-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--huddle-text-tertiary);
+}
+
+#hud-hotkey-hint kbd {
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--huddle-border-strong);
+  background: rgba(255, 255, 255, 0.06);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--huddle-text-secondary);
+}
+
+#hud-hotkey-hint span {
+  margin-left: 2px;
+}
+
+#listening-indicator {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--huddle-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ------------------------------------------------------------------ cards --- */
+
+.hud-card {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--huddle-border);
+  background: var(--huddle-surface);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+.hud-card-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--huddle-text-tertiary);
+}
+
+.card-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--huddle-accent);
+}
+
+/* -------------------------------------------------------------- notices --- */
+
+.notice-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--huddle-warning);
+}
+
+.notice-body {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--huddle-text-secondary);
+}
+
+code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 10.5px;
+  color: #9dc2ff;
+}
+
+#models-progress-track {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+#models-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: var(--huddle-accent);
+  transition: width 240ms ease;
+}
+
+/* ----------------------------------------------------------- transcript --- */
+
+#transcript-section {
+  flex: 1;
+  min-height: 0;
+}
+
+#transcript-log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#transcript-empty-state {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--huddle-text-tertiary);
+}
+
+.transcript-line {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.transcript-line .speaker {
+  font-weight: 700;
+  margin-right: 5px;
+}
+
+.transcript-line.channel-you .speaker {
+  color: var(--huddle-accent);
+}
+
+.transcript-line.channel-them .speaker {
+  color: var(--huddle-them-accent);
+}
+
+.transcript-line .text {
+  color: var(--huddle-text-secondary);
+}
+
+/* ----------------------------------------------------------- suggestion --- */
+
+#suggestion-section {
+  max-height: 42%;
+}
+
+#suggestion-text {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--huddle-text-primary);
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+#error-section {
+  padding: 12px 14px;
+}
+
+#error-text {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--huddle-destructive-text);
+  overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------------- input --- */
+
+#question-form {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-color: var(--huddle-accent);
+}
+
+#question-form .card-icon {
+  color: var(--huddle-text-tertiary);
+}
+
+#question-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--huddle-text-primary);
+  font-family: inherit;
+  font-size: 12.5px;
+}
+
+#question-input::placeholder {
+  color: var(--huddle-text-tertiary);
+}

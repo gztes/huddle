@@ -1,0 +1,11 @@
+node_modules/
+dist/
+assets/trayIcon.png
+release/
+*.log
+
+# Local API keys — never commit these. The glob also catches accidental
+# Notepad "Save As" typos like .env.txt.
+.env
+.env.*
+!.env.example
