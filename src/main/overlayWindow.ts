@@ -14,13 +14,16 @@ import * as path from "path";
 import { IpcChannels } from "../shared/ipcChannels";
 import type { OverlayState, QuestionSubmission } from "../shared/types";
 
-const OVERLAY_WIDTH_PIXELS = 440;
-const OVERLAY_HEIGHT_PIXELS = 520;
+// Wide enough for the two-column (transcript + suggestion) layout, matching
+// Cluely's reference proportions — the old 440px single-column width was the
+// main reason the HUD read as "cramped" compared to it.
+const OVERLAY_WIDTH_PIXELS = 820;
+const OVERLAY_HEIGHT_PIXELS = 580;
 const OVERLAY_MARGIN_PIXELS = 24;
-const OVERLAY_MIN_WIDTH_PIXELS = 320;
-const OVERLAY_MIN_HEIGHT_PIXELS = 280;
-const OVERLAY_MAX_WIDTH_PIXELS = 800;
-const OVERLAY_MAX_HEIGHT_PIXELS = 1000;
+const OVERLAY_MIN_WIDTH_PIXELS = 360;
+const OVERLAY_MIN_HEIGHT_PIXELS = 300;
+const OVERLAY_MAX_WIDTH_PIXELS = 1400;
+const OVERLAY_MAX_HEIGHT_PIXELS = 1100;
 
 /**
  * `setContentProtection(true)` isn't applied atomically — DWM needs a beat to
@@ -37,6 +40,7 @@ export interface OverlayWindowCallbacks {
   onRequestState: () => OverlayState;
   onSubmitQuestion: (submission: QuestionSubmission) => void;
   onRequestDismiss: () => void;
+  onSetListeningEnabled: (isEnabled: boolean) => void;
 }
 
 export class OverlayWindow {
@@ -125,6 +129,10 @@ export class OverlayWindow {
 
     ipcMain.on(IpcChannels.overlayRequestDismiss, () => {
       callbacks.onRequestDismiss();
+    });
+
+    ipcMain.on(IpcChannels.overlaySetListeningEnabled, (_event, isEnabled: boolean) => {
+      callbacks.onSetListeningEnabled(isEnabled);
     });
   }
 

@@ -15,7 +15,8 @@
 // throws ReferenceError in a plain <script> tag — there's no `exports`
 // global outside Node/CommonJS. An IIFE avoids the whole problem.
 (function (): void {
-  const hudStatusDotElement = document.getElementById("hud-status-dot") as HTMLDivElement;
+  const hudStatusButtonElement = document.getElementById("hud-status-button") as HTMLButtonElement;
+  const hudTimerElement = document.getElementById("hud-timer") as HTMLSpanElement;
   const setupNoticeElement = document.getElementById("setup-notice") as HTMLElement;
   const modelsNoticeElement = document.getElementById("models-notice") as HTMLElement;
   const modelsTitleElement = document.getElementById("models-title") as HTMLParagraphElement;
@@ -58,10 +59,11 @@
   }
 
   function renderOverlayState(overlayState: HuddleOverlayState): void {
-    hudStatusDotElement.dataset.listening = String(overlayState.isListeningEnabled);
-    listeningIndicatorElement.textContent = overlayState.isListeningEnabled
-      ? "Listening"
-      : "Paused — resume from the tray icon";
+    hudStatusButtonElement.dataset.listening = String(overlayState.isListeningEnabled);
+    hudStatusButtonElement.title = overlayState.isListeningEnabled
+      ? "Listening — click to pause"
+      : "Paused — click to resume";
+    listeningIndicatorElement.textContent = overlayState.isListeningEnabled ? "Listening" : "Paused";
 
     renderHotkeyHint(overlayState.hotkeyLabel);
 
@@ -131,40 +133,57 @@
     transcriptLogElement.scrollTop = transcriptLogElement.scrollHeight;
   }
 
+  // --------------------------------------------------------------- toolbar
+
+  /** Click toggles listening directly from the HUD — this is the "stop transcript" control. */
+  hudStatusButtonElement.addEventListener("click", () => {
+    const isCurrentlyListening = hudStatusButtonElement.dataset.listening === "true";
+    window.huddleOverlay.setListeningEnabled(!isCurrentlyListening);
+  });
+
+  // A simple mm:ss elapsed-time readout since this window loaded, which is
+  // effectively "since the session started" under the one-session-per-launch
+  // model. Purely decorative, like Cluely's — not tied to audio activity.
+  const sessionStartTimeMs = Date.now();
+  function updateElapsedTimer(): void {
+    const elapsedSeconds = Math.floor((Date.now() - sessionStartTimeMs) / 1000);
+    const minutes = Math.floor(elapsedSeconds / 60);
+    const seconds = elapsedSeconds % 60;
+    hudTimerElement.textContent = `${minutes}:${String(seconds).padStart(2, "0")}`;
+  }
+  updateElapsedTimer();
+  setInterval(updateElapsedTimer, 1000);
+
   // ------------------------------------------------------------ suggestion
 
-  function showQuestionInput(): void {
-    questionFormElement.classList.remove("is-hidden");
-    questionInputElement.value = "";
+  /** Focuses the always-visible input — called on the global hotkey. */
+  function focusQuestionInput(): void {
+    questionInputElement.select();
     questionInputElement.focus();
-  }
-
-  function hideQuestionInput(): void {
-    questionFormElement.classList.add("is-hidden");
-    questionInputElement.blur();
   }
 
   questionFormElement.addEventListener("submit", (submitEvent) => {
     submitEvent.preventDefault();
     const questionText = questionInputElement.value;
-    hideQuestionInput();
+    questionInputElement.value = "";
+    questionInputElement.blur();
     window.huddleOverlay.submitQuestion(questionText, false);
   });
 
   questionInputElement.addEventListener("keydown", (keyboardEvent) => {
     if (keyboardEvent.key === "Escape") {
-      hideQuestionInput();
+      questionInputElement.blur();
       window.huddleOverlay.requestDismiss();
     }
   });
 
   window.huddleOverlay.onShowInput(() => {
-    showQuestionInput();
+    focusQuestionInput();
   });
 
   // ------------------------------------------------------------- quick actions
 
-  /** Canned prompts + whether Google Search grounding should be on, per chip. */
+  /** Canned prompts + whether Google Search grounding should be on, per action row. */
   const QUICK_ACTION_PROMPTS: Record<string, { prompt: string; enableWebSearch: boolean }> = {
     "follow-up": {
       prompt: "Suggest 2-3 good follow-up questions I could ask them right now, based on the conversation so far.",
@@ -178,16 +197,21 @@
       prompt: "Search the web for anything relevant to what was just discussed and give me the key facts.",
       enableWebSearch: true,
     },
+    recap: {
+      prompt:
+        "Recap the conversation so far: a short summary, then any action items or open questions, as two clearly labeled sections.",
+      enableWebSearch: false,
+    },
   };
 
   quickActionsElement.addEventListener("click", (clickEvent) => {
-    const clickedChip = (clickEvent.target as HTMLElement).closest<HTMLButtonElement>(
-      ".quick-action-chip"
+    const clickedRow = (clickEvent.target as HTMLElement).closest<HTMLButtonElement>(
+      ".quick-action-row"
     );
-    if (clickedChip === null) {
+    if (clickedRow === null) {
       return;
     }
-    const actionConfig = QUICK_ACTION_PROMPTS[clickedChip.dataset.action ?? ""];
+    const actionConfig = QUICK_ACTION_PROMPTS[clickedRow.dataset.action ?? ""];
     if (actionConfig === undefined) {
       return;
     }

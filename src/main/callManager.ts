@@ -51,6 +51,7 @@ export class CallManager {
       onRequestState: () => this.currentOverlayState(),
       onSubmitQuestion: (submission) => this.handleSubmitQuestion(submission),
       onRequestDismiss: () => this.handleRequestDismiss(),
+      onSetListeningEnabled: (isEnabled) => this.setListeningEnabled(isEnabled),
     });
 
     this.captureWindow.create({
