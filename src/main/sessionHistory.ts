@@ -101,7 +101,7 @@ export class SessionHistory {
         updatedAtMs: session.updatedAtMs,
         lineCount: session.lines.length,
         previewText: buildPreviewText(session),
-        hasSummary: session.summary !== null,
+        hasSummary: session.summary != null,
       });
     }
 
