@@ -14,6 +14,7 @@
   const sessionDetailViewElement = document.getElementById("session-detail-view") as HTMLElement;
   const emptyStateElement = document.getElementById("empty-state") as HTMLParagraphElement;
   const sessionListElement = document.getElementById("session-list") as HTMLDivElement;
+  const detailEventTitleElement = document.getElementById("detail-event-title") as HTMLHeadingElement;
   const detailDateElement = document.getElementById("detail-date") as HTMLParagraphElement;
   const detailSummarySectionElement = document.getElementById("detail-summary-section") as HTMLElement;
   const detailSummaryTextElement = document.getElementById("detail-summary-text") as HTMLParagraphElement;
@@ -48,11 +49,17 @@
 
         const previewElement = document.createElement("span");
         previewElement.className = "session-preview";
-        // A real summary reads as a title; a raw first-transcript-line fallback
-        // reads as a quote, so it gets a visual cue to tell them apart.
-        previewElement.textContent = session.hasSummary
-          ? session.previewText
-          : `"${session.previewText}"`;
+        if (session.calendarEventTitle !== null) {
+          // The calendar event title is the row's primary label when present —
+          // the timestamp above it becomes the secondary detail instead.
+          previewElement.textContent = session.calendarEventTitle;
+        } else {
+          // A real summary reads as a title; a raw first-transcript-line fallback
+          // reads as a quote, so it gets a visual cue to tell them apart.
+          previewElement.textContent = session.hasSummary
+            ? session.previewText
+            : `"${session.previewText}"`;
+        }
 
         const metaElement = document.createElement("span");
         metaElement.className = "session-meta";
@@ -74,6 +81,11 @@
     }
 
     currentDetailSessionId = sessionId;
+    // Older session files predate this field entirely (undefined at runtime
+    // despite the string | null type) — normalize to null rather than `!== null`.
+    const calendarEventTitle = session.calendarEventTitle ?? null;
+    detailEventTitleElement.classList.toggle("is-hidden", calendarEventTitle === null);
+    detailEventTitleElement.textContent = calendarEventTitle ?? "";
     detailDateElement.textContent = formatSessionDate(session.startedAtMs);
 
     detailSummarySectionElement.classList.toggle("is-hidden", session.summary === null);

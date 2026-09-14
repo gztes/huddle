@@ -54,6 +54,21 @@
           <p class="field-hint">How long transcript lines stay in memory at all.</p>
         </section>
 
+        <section class="field">
+          <label for="calendar-ics-url-input">Calendar ICS URL (optional)</label>
+          <input
+            id="calendar-ics-url-input"
+            type="text"
+            placeholder="https://calendar.google.com/calendar/ical/…/private-…/basic.ics"
+            autocomplete="off"
+          />
+          <p class="field-hint">
+            Find this under Google Calendar → Settings → [your calendar] → "Secret address in
+            iCal format." Enables the tray's next-meeting label and tags History sessions with
+            the meeting they happened during. Leave blank to disable.
+          </p>
+        </section>
+
         <p id="error-text" class="is-hidden"></p>
       </div>
 

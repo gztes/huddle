@@ -25,6 +25,7 @@ function startHuddle(): void {
       onToggleListening: (isEnabled) => callManager.setListeningEnabled(isEnabled),
       onOpenSettings: () => callManager.openSettings(),
       onOpenHistory: () => callManager.openHistory(),
+      nextMeetingLabel: () => callManager.nextMeetingLabel(),
     });
 
     callManager.start();

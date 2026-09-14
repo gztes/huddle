@@ -70,6 +70,7 @@ the Settings window takes over from then on.
 | `HUDDLE_CONTEXT_WINDOW_MINUTES` | No | How much recent transcript is sent per suggestion (default 5) |
 | `HUDDLE_TRANSCRIPT_RETENTION_MINUTES` | No | How long transcript lines stay in memory at all (default 30) |
 | `HUDDLE_WORKER_URL` | No | Proxy through a Cloudflare Worker instead of calling Gemini directly |
+| `HUDDLE_CALENDAR_ICS_URL` | No | Google Calendar's "Secret address in iCal format" — enables the tray's next-meeting label and History event tagging |
 
 ## Privacy
 
@@ -86,6 +87,12 @@ the Settings window takes over from then on.
   delete a single session or all of it from the History window.
 - Only the lines you explicitly ask about (via the hotkey) are ever sent to
   Gemini, as plain text — session history itself is never sent anywhere.
+- **Calendar integration is opt-in and read-only**: an unset ICS URL leaves
+  the feature fully inert. When set, Huddle fetches that feed directly from
+  Google's calendar servers — it never passes through any Huddle-controlled
+  backend. Fetched events live only in memory, except for the single
+  `calendarEventTitle` string that gets saved into a session's own
+  already-local JSON file.
 - The HUD overlay is content-protected (`setContentProtection(true)`, same
   trick as Clicky's cursor) — it's excluded from `desktopCapturer`, so it
   never appears in a screen-share or a recording of the call, on either side.
@@ -123,9 +130,13 @@ something closer to a full app, each as its own scoped piece of work:
    first-line preview, no AI-generated titles for v1 — that'd mean an extra
    Gemini call per session) and lets you open one to read the full
    transcript, or delete a session / all history. Local-only, as agreed.
-4. **Calendar integration** — OAuth against Google Calendar/Outlook to
-   pre-load context for upcoming meetings. The biggest, most separate piece;
-   built last.
+4. ✅ **Calendar integration** — read-only, via a Google Calendar ICS feed URL
+   (no OAuth needed for this scope). The tray menu shows a "Now:"/"Next:"
+   meeting label, and past History sessions are tagged with the calendar
+   event they overlapped when they started. Calendar data is never fed into
+   the Gemini suggestion prompt, and listening is never auto-armed from a
+   meeting starting — both stayed manual, as agreed. Google Calendar only for
+   v1; no write access.
 
 ## Project structure
 
@@ -137,6 +148,7 @@ src/
     geminiClient.ts              # Gemini SSE streaming + the suggestion system prompt
     transcriptStore.ts           # rolling in-memory transcript, retention window
     sessionHistory.ts            # full-session archive, one JSON file per app launch
+    calendarClient.ts            # read-only Google Calendar ICS feed client (no OAuth)
     globalHotkey.ts              # parses "Ctrl+Alt+H" style strings, single-press trigger
     overlayWindow.ts             # the content-protected, resizable HUD window
     settingsWindow.ts            # the Settings window (not content-protected)

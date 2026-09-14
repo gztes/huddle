@@ -6,6 +6,7 @@
  */
 
 import { Menu, Tray, app, nativeImage } from "electron";
+import type { MenuItemConstructorOptions } from "electron";
 import * as path from "path";
 
 export interface TrayCallbacks {
@@ -13,6 +14,8 @@ export interface TrayCallbacks {
   onToggleListening: (isEnabled: boolean) => void;
   onOpenSettings: () => void;
   onOpenHistory: () => void;
+  /** "Now: <title>" / "Next: <title> at H:MM" / null when nothing to show. Read live each time the menu opens. */
+  nextMeetingLabel: () => string | null;
 }
 
 export class TrayManager {
@@ -37,7 +40,13 @@ export class TrayManager {
 
   private buildContextMenu(callbacks: TrayCallbacks): Menu {
     const isListening = callbacks.isListeningEnabled();
-    return Menu.buildFromTemplate([
+    const nextMeetingLabel = callbacks.nextMeetingLabel();
+
+    const menuItems: MenuItemConstructorOptions[] = [];
+    if (nextMeetingLabel !== null) {
+      menuItems.push({ label: nextMeetingLabel, enabled: false }, { type: "separator" });
+    }
+    menuItems.push(
       {
         label: isListening ? "Pause listening" : "Resume listening",
         click: () => callbacks.onToggleListening(!isListening),
@@ -46,8 +55,10 @@ export class TrayManager {
       { label: "History…", click: () => callbacks.onOpenHistory() },
       { label: "Settings…", click: () => callbacks.onOpenSettings() },
       { type: "separator" },
-      { label: "Quit Huddle", click: () => app.quit() },
-    ]);
+      { label: "Quit Huddle", click: () => app.quit() }
+    );
+
+    return Menu.buildFromTemplate(menuItems);
   }
 
   destroy(): void {

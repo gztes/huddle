@@ -22,7 +22,7 @@ export class SessionHistory {
   private currentSession: StoredSession | null = null;
 
   /** Call once per app launch — each run is its own session. */
-  startSession(): void {
+  startSession(calendarEventTitle: string | null): void {
     const startedAtMs = Date.now();
     this.currentSession = {
       sessionId: String(startedAtMs),
@@ -30,6 +30,7 @@ export class SessionHistory {
       updatedAtMs: startedAtMs,
       lines: [],
       summary: null,
+      calendarEventTitle,
     };
   }
 
@@ -102,6 +103,7 @@ export class SessionHistory {
         lineCount: session.lines.length,
         previewText: buildPreviewText(session),
         hasSummary: session.summary != null,
+        calendarEventTitle: session.calendarEventTitle ?? null,
       });
     }
 

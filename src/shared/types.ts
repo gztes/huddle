@@ -66,6 +66,8 @@ export interface SettingsState {
   modelIdentifier: string;
   contextWindowMinutes: number;
   transcriptRetentionMinutes: number;
+  /** Google Calendar's "Secret address in iCal format" for a calendar. Empty disables Calendar integration entirely. */
+  calendarIcsUrl: string;
 }
 
 /**
@@ -86,6 +88,8 @@ export interface StoredSession {
    * ~35s never gets one).
    */
   summary: string | null;
+  /** The calendar event this session overlapped when it started, if Calendar integration is configured. */
+  calendarEventTitle: string | null;
 }
 
 /** The lightweight row shown in the History window's session list. */
@@ -97,4 +101,5 @@ export interface SessionSummary {
   /** The stored summary if there is one, else the first transcript line — truncated either way. */
   previewText: string;
   hasSummary: boolean;
+  calendarEventTitle: string | null;
 }

@@ -30,6 +30,7 @@ interface PersistedSettings {
   modelIdentifierOverride?: string;
   contextWindowMinutesOverride?: number;
   transcriptRetentionMinutesOverride?: number;
+  calendarIcsUrlOverride?: string;
 }
 
 const defaultSettings: PersistedSettings = {
@@ -211,6 +212,13 @@ export function transcriptRetentionMinutes(): number {
     : DEFAULT_TRANSCRIPT_RETENTION_MINUTES;
 }
 
+// ------------------------------------------------------------------ calendar
+
+/** Google Calendar's "Secret address in iCal format" for a calendar. Empty disables Calendar integration. */
+export function calendarIcsUrl(): string {
+  return settings().calendarIcsUrlOverride || configuredValue("HUDDLE_CALENDAR_ICS_URL");
+}
+
 // ------------------------------------------------------------ persisted prefs
 
 function settingsFilePath(): string {
@@ -257,6 +265,7 @@ export function currentSettingsSnapshot(): SettingsState {
     modelIdentifier: modelIdentifier(),
     contextWindowMinutes: contextWindowMinutes(),
     transcriptRetentionMinutes: transcriptRetentionMinutes(),
+    calendarIcsUrl: calendarIcsUrl(),
   };
 }
 
@@ -275,5 +284,6 @@ export function applySettingsUpdate(update: SettingsState): void {
     current.contextWindowMinutesOverride,
     Math.round(update.transcriptRetentionMinutes) || DEFAULT_TRANSCRIPT_RETENTION_MINUTES
   );
+  current.calendarIcsUrlOverride = update.calendarIcsUrl.trim();
   persistSettingsToDisk();
 }

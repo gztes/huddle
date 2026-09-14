@@ -163,6 +163,13 @@ body {
   color: var(--huddle-text-tertiary);
 }
 
+#detail-event-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--huddle-text-primary);
+  margin-bottom: 4px;
+}
+
 #detail-date {
   font-size: 12px;
   font-weight: 600;
