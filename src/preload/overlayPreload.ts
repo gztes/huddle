@@ -20,6 +20,10 @@ contextBridge.exposeInMainWorld("huddleOverlay", {
     ipcRenderer.send(IpcChannels.overlayRequestDismiss);
   },
 
+  setListeningEnabled: (isEnabled: boolean): void => {
+    ipcRenderer.send(IpcChannels.overlaySetListeningEnabled, isEnabled);
+  },
+
   // ---- main → renderer ----
 
   onStateUpdated: (handleStateUpdate: (overlayState: OverlayState) => void): void => {

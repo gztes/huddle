@@ -19,6 +19,8 @@ export const IpcChannels = {
   overlayRequestState: "overlay:request-state",
   overlaySubmitQuestion: "overlay:submit-question",
   overlayRequestDismiss: "overlay:request-dismiss",
+  /** The HUD's own mic/status button — a "stop transcript" control, not just the tray's. */
+  overlaySetListeningEnabled: "overlay:set-listening-enabled",
 
   // ---- Main → overlay renderer ----
   overlayStateUpdated: "overlay:state-updated",
