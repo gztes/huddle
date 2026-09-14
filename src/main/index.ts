@@ -23,6 +23,7 @@ function startHuddle(): void {
     trayManager.create({
       isListeningEnabled: () => callManager.isListeningEnabled(),
       onToggleListening: (isEnabled) => callManager.setListeningEnabled(isEnabled),
+      onOpenSettings: () => callManager.openSettings(),
     });
 
     callManager.start();

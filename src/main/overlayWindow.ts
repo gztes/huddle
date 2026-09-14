@@ -17,6 +17,10 @@ import type { OverlayState } from "../shared/types";
 const OVERLAY_WIDTH_PIXELS = 440;
 const OVERLAY_HEIGHT_PIXELS = 520;
 const OVERLAY_MARGIN_PIXELS = 24;
+const OVERLAY_MIN_WIDTH_PIXELS = 320;
+const OVERLAY_MIN_HEIGHT_PIXELS = 280;
+const OVERLAY_MAX_WIDTH_PIXELS = 800;
+const OVERLAY_MAX_HEIGHT_PIXELS = 1000;
 
 /**
  * `setContentProtection(true)` isn't applied atomically — DWM needs a beat to
@@ -46,9 +50,13 @@ export class OverlayWindow {
       y: primaryDisplay.workArea.y + OVERLAY_MARGIN_PIXELS,
       width: OVERLAY_WIDTH_PIXELS,
       height: OVERLAY_HEIGHT_PIXELS,
+      minWidth: OVERLAY_MIN_WIDTH_PIXELS,
+      minHeight: OVERLAY_MIN_HEIGHT_PIXELS,
+      maxWidth: OVERLAY_MAX_WIDTH_PIXELS,
+      maxHeight: OVERLAY_MAX_HEIGHT_PIXELS,
       transparent: true,
       frame: false,
-      resizable: false,
+      resizable: true,
       movable: true,
       minimizable: false,
       maximizable: false,

@@ -9,6 +9,7 @@
 import { app } from "electron";
 import * as fs from "fs";
 import * as path from "path";
+import type { SettingsState } from "../shared/types";
 
 const DEFAULT_MODEL_IDENTIFIER = "gemini-2.5-flash";
 const DEFAULT_HOTKEY = "Ctrl+Alt+H";
@@ -17,6 +18,18 @@ const DEFAULT_TRANSCRIPT_RETENTION_MINUTES = 30;
 
 interface PersistedSettings {
   isListeningEnabled: boolean;
+  /**
+   * Overrides below are unset (undefined) until the user saves them from the
+   * Settings window. Unset means "fall through to .env, then the default" —
+   * see `configuredValue`. Once set here, they win over .env permanently,
+   * which is what lets Settings actually change behavior instead of just
+   * echoing whatever the .env file already said.
+   */
+  geminiApiKeyOverride?: string;
+  hotkeyOverride?: string;
+  modelIdentifierOverride?: string;
+  contextWindowMinutesOverride?: number;
+  transcriptRetentionMinutesOverride?: number;
 }
 
 const defaultSettings: PersistedSettings = {
@@ -119,7 +132,7 @@ export function reloadConfiguration(): void {
 // ------------------------------------------------------------------ API keys
 
 export function geminiApiKey(): string {
-  return configuredValue("GEMINI_API_KEY");
+  return settings().geminiApiKeyOverride || configuredValue("GEMINI_API_KEY");
 }
 
 /**
@@ -145,7 +158,11 @@ export function isGeminiConfigured(): boolean {
 // ------------------------------------------------------------- suggestion model
 
 export function modelIdentifier(): string {
-  return configuredValue("HUDDLE_MODEL") || DEFAULT_MODEL_IDENTIFIER;
+  return (
+    settings().modelIdentifierOverride ||
+    configuredValue("HUDDLE_MODEL") ||
+    DEFAULT_MODEL_IDENTIFIER
+  );
 }
 
 // ----------------------------------------------------------------- endpoints
@@ -171,17 +188,23 @@ export function chatAuthHeaders(): Record<string, string> {
 
 /** e.g. "Ctrl+Alt+H" — parsed by globalHotkey.ts into individual keys. */
 export function suggestionHotkey(): string {
-  return configuredValue("HUDDLE_HOTKEY") || DEFAULT_HOTKEY;
+  return settings().hotkeyOverride || configuredValue("HUDDLE_HOTKEY") || DEFAULT_HOTKEY;
 }
 
 /** How much of the rolling transcript gets sent to Gemini per suggestion. */
 export function contextWindowMinutes(): number {
+  if (settings().contextWindowMinutesOverride !== undefined) {
+    return settings().contextWindowMinutesOverride as number;
+  }
   const parsed = Number(configuredValue("HUDDLE_CONTEXT_WINDOW_MINUTES"));
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_CONTEXT_WINDOW_MINUTES;
 }
 
 /** How long transcript lines are kept in memory at all before being dropped. */
 export function transcriptRetentionMinutes(): number {
+  if (settings().transcriptRetentionMinutesOverride !== undefined) {
+    return settings().transcriptRetentionMinutesOverride as number;
+  }
   const parsed = Number(configuredValue("HUDDLE_TRANSCRIPT_RETENTION_MINUTES"));
   return Number.isFinite(parsed) && parsed > 0
     ? parsed
@@ -221,5 +244,36 @@ export function isListeningEnabled(): boolean {
 
 export function setListeningEnabled(isEnabled: boolean): void {
   settings().isListeningEnabled = isEnabled;
+  persistSettingsToDisk();
+}
+
+// ----------------------------------------------------------- settings window
+
+/** The Settings window's starting values — whatever's currently in effect. */
+export function currentSettingsSnapshot(): SettingsState {
+  return {
+    geminiApiKey: geminiApiKey(),
+    hotkey: suggestionHotkey(),
+    modelIdentifier: modelIdentifier(),
+    contextWindowMinutes: contextWindowMinutes(),
+    transcriptRetentionMinutes: transcriptRetentionMinutes(),
+  };
+}
+
+/**
+ * Applies and persists a full settings save in one go. Numbers are clamped
+ * to something sane rather than rejected outright — a stray "0" or a typo
+ * shouldn't brick the app, it should just fall back to a safe minimum.
+ */
+export function applySettingsUpdate(update: SettingsState): void {
+  const current = settings();
+  current.geminiApiKeyOverride = update.geminiApiKey.trim();
+  current.hotkeyOverride = update.hotkey.trim();
+  current.modelIdentifierOverride = update.modelIdentifier.trim();
+  current.contextWindowMinutesOverride = Math.max(1, Math.round(update.contextWindowMinutes) || DEFAULT_CONTEXT_WINDOW_MINUTES);
+  current.transcriptRetentionMinutesOverride = Math.max(
+    current.contextWindowMinutesOverride,
+    Math.round(update.transcriptRetentionMinutes) || DEFAULT_TRANSCRIPT_RETENTION_MINUTES
+  );
   persistSettingsToDisk();
 }

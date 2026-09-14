@@ -31,6 +31,23 @@ interface HuddleOverlayState {
   suggestionState: HuddleSuggestionState;
   suggestionText: string;
   lastErrorMessage: string | null;
+  hotkeyLabel: string;
+}
+
+interface HuddleSettingsState {
+  geminiApiKey: string;
+  hotkey: string;
+  modelIdentifier: string;
+  contextWindowMinutes: number;
+  transcriptRetentionMinutes: number;
+}
+
+interface HuddleSettingsApi {
+  requestState(): Promise<HuddleSettingsState>;
+  save(update: HuddleSettingsState): void;
+  requestClose(): void;
+  onSaved(handleSaved: () => void): void;
+  onSaveFailed(handleSaveFailed: (errorMessage: string) => void): void;
 }
 
 interface HuddleOverlayApi {
@@ -56,4 +73,5 @@ interface HuddleCaptureApi {
 interface Window {
   huddleOverlay: HuddleOverlayApi;
   huddleCapture: HuddleCaptureApi;
+  huddleSettings: HuddleSettingsApi;
 }

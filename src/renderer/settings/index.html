@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'"
+    />
+    <title>Huddle Settings</title>
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <div id="settings-card">
+      <header id="settings-header">
+        <h1>Settings</h1>
+        <button id="close-button" type="button" aria-label="Close">✕</button>
+      </header>
+
+      <div id="settings-body">
+        <section class="field">
+          <label for="api-key-input">Gemini API key</label>
+          <div class="input-row">
+            <input id="api-key-input" type="password" placeholder="AIza…" autocomplete="off" />
+            <button id="toggle-key-visibility-button" type="button" class="icon-button">Show</button>
+          </div>
+          <p class="field-hint">
+            Free key from <code>aistudio.google.com/apikey</code>.
+          </p>
+        </section>
+
+        <section class="field">
+          <label>Suggestion hotkey</label>
+          <div class="input-row">
+            <div id="hotkey-display">Ctrl+Alt+H</div>
+            <button id="change-hotkey-button" type="button" class="icon-button">Change</button>
+          </div>
+          <p class="field-hint" id="hotkey-hint">Hold the hotkey during a call to ask for a suggestion.</p>
+        </section>
+
+        <section class="field">
+          <label>Model</label>
+          <div id="model-options"></div>
+        </section>
+
+        <section class="field">
+          <label for="context-window-input">Context window (minutes)</label>
+          <input id="context-window-input" type="number" min="1" max="60" step="1" />
+          <p class="field-hint">How much recent transcript gets sent per suggestion.</p>
+        </section>
+
+        <section class="field">
+          <label for="retention-input">Transcript retention (minutes)</label>
+          <input id="retention-input" type="number" min="1" max="240" step="1" />
+          <p class="field-hint">How long transcript lines stay in memory at all.</p>
+        </section>
+
+        <p id="error-text" class="is-hidden"></p>
+      </div>
+
+      <footer id="settings-footer">
+        <button id="cancel-button" type="button" class="secondary-button">Cancel</button>
+        <button id="save-button" type="button" class="primary-button">Save</button>
+      </footer>
+    </div>
+
+    <script src="settings.js"></script>
+  </body>
+</html>
