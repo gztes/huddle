@@ -11,7 +11,7 @@ import * as fs from "fs";
 import * as path from "path";
 import type { SettingsState } from "../shared/types";
 
-const DEFAULT_MODEL_IDENTIFIER = "gemini-2.5-flash";
+const DEFAULT_MODEL_IDENTIFIER = "gemini-3.5-flash-lite";
 const DEFAULT_HOTKEY = "Ctrl+Alt+H";
 const DEFAULT_CONTEXT_WINDOW_MINUTES = 5;
 const DEFAULT_TRANSCRIPT_RETENTION_MINUTES = 30;

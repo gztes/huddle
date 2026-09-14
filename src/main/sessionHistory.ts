@@ -29,6 +29,7 @@ export class SessionHistory {
       startedAtMs,
       updatedAtMs: startedAtMs,
       lines: [],
+      summary: null,
     };
   }
 
@@ -44,6 +45,19 @@ export class SessionHistory {
     }
     this.currentSession.lines.push(line);
     this.currentSession.updatedAtMs = Date.now();
+    this.persistCurrentSession();
+  }
+
+  /**
+   * Stores the latest auto-refresh result (summary + action items) as this
+   * session's "memory" — reuses the suggestion Gemini already generated for
+   * the live overlay rather than making a dedicated summarization call.
+   */
+  updateSummary(summaryText: string): void {
+    if (this.currentSession === null) {
+      return;
+    }
+    this.currentSession.summary = summaryText;
     this.persistCurrentSession();
   }
 
@@ -86,7 +100,8 @@ export class SessionHistory {
         startedAtMs: session.startedAtMs,
         updatedAtMs: session.updatedAtMs,
         lineCount: session.lines.length,
-        previewText: buildPreviewText(session.lines),
+        previewText: buildPreviewText(session),
+        hasSummary: session.summary !== null,
       });
     }
 
@@ -129,12 +144,14 @@ function readSessionFile(filePath: string): StoredSession | null {
   }
 }
 
-function buildPreviewText(lines: TranscriptLine[]): string {
-  if (lines.length === 0) {
+/** Prefers the stored summary (reads as a real gist); falls back to the first line. */
+function buildPreviewText(session: StoredSession): string {
+  const sourceText = session.summary ?? (session.lines.length > 0 ? session.lines[0].text : null);
+  if (sourceText === null) {
     return "(empty session)";
   }
-  const firstLineText = lines[0].text;
-  return firstLineText.length > PREVIEW_TEXT_MAX_LENGTH
-    ? `${firstLineText.slice(0, PREVIEW_TEXT_MAX_LENGTH)}…`
-    : firstLineText;
+  const singleLineText = sourceText.replace(/\s+/g, " ").trim();
+  return singleLineText.length > PREVIEW_TEXT_MAX_LENGTH
+    ? `${singleLineText.slice(0, PREVIEW_TEXT_MAX_LENGTH)}…`
+    : singleLineText;
 }

@@ -110,14 +110,17 @@ export async function requestStreamingSuggestion(options: {
 }
 
 /**
- * Thinking is on by default on 2.5 models and eats into max_output_tokens
- * before any visible text comes out — bad when the user needs an answer in
- * the next few seconds of a live call. Flash can disable it outright; Pro's
- * API rejects a budget of 0 (minimum is 128), so it gets the smallest budget
- * it accepts instead.
+ * Thinking is on by default and eats into max_output_tokens before any
+ * visible text comes out — bad when the user needs an answer in the next few
+ * seconds of a live call. Only 2.5 Flash accepts disabling it outright
+ * (budget 0); every other model here — Pro, and the 3.x generation's
+ * Flash-Lite — rejects 0 with an INVALID_ARGUMENT 400 and needs the smallest
+ * budget it accepts instead. Matching on the literal identifier rather than
+ * "flash".includes() because 3.5-flash-lite contains "flash" too but does
+ * NOT accept a zero budget.
  */
 function thinkingConfigForModel(modelId: string): { thinking_budget: number } {
-  return { thinking_budget: modelId.includes("flash") ? 0 : 128 };
+  return { thinking_budget: modelId === "gemini-2.5-flash" ? 0 : 128 };
 }
 
 /**

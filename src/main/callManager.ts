@@ -196,7 +196,7 @@ export class CallManager {
       );
       return;
     }
-    this.runSuggestionRequest(submission.questionText, submission.enableWebSearch);
+    this.runSuggestionRequest(submission.questionText, submission.enableWebSearch, false);
   }
 
   /**
@@ -223,11 +223,15 @@ export class CallManager {
     }
 
     console.log("Auto-refreshing suggestion (new conversation since last check)");
-    this.runSuggestionRequest(AUTO_REFRESH_PROMPT, false);
+    this.runSuggestionRequest(AUTO_REFRESH_PROMPT, false, true);
   }
 
   /** Shared by both a typed/Quick Action question and the periodic auto-refresh. */
-  private runSuggestionRequest(questionText: string, enableWebSearch: boolean): void {
+  private runSuggestionRequest(
+    questionText: string,
+    enableWebSearch: boolean,
+    isAutoRefresh: boolean
+  ): void {
     this.currentSuggestionAbortController?.abort();
     const abortController = new AbortController();
     this.currentSuggestionAbortController = abortController;
@@ -259,6 +263,12 @@ export class CallManager {
         this.suggestionState = "idle";
         this.lastExchange = { userQuestion: questionText, suggestionText: finalSuggestionText };
         this.lastAutoRefreshAtMs = Date.now();
+        // Only an auto-refresh result becomes the session's persisted
+        // "memory" — a one-off manual answer (e.g. "search the web for X")
+        // isn't representative of the session as a whole.
+        if (isAutoRefresh) {
+          this.sessionHistory.updateSummary(finalSuggestionText);
+        }
         // The overlay only knows streaming finished once this lands — it has
         // no other terminal event on success, only started/chunk/error.
         this.publishOverlayState();
