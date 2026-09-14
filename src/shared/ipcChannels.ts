@@ -27,4 +27,13 @@ export const IpcChannels = {
   overlaySuggestionStarted: "overlay:suggestion-started",
   overlaySuggestionChunk: "overlay:suggestion-chunk",
   overlaySuggestionError: "overlay:suggestion-error",
+
+  // ---- Settings renderer → main ----
+  settingsRequestState: "settings:request-state",
+  settingsSave: "settings:save",
+  settingsRequestClose: "settings:request-close",
+
+  // ---- Main → settings renderer ----
+  settingsSaved: "settings:saved",
+  settingsSaveFailed: "settings:save-failed",
 } as const;

@@ -1,7 +1,7 @@
 /**
  * The system tray icon. Huddle has no dropdown panel like Clicky — the HUD
- * overlay itself is the UI — so the tray only needs a right-click menu to
- * pause listening (privacy control between calls) and quit.
+ * overlay itself is the UI — so the tray menu just needs to pause listening
+ * (privacy control between calls), open Settings, and quit.
  */
 
 import { Menu, Tray, app, nativeImage } from "electron";
@@ -10,6 +10,7 @@ import * as path from "path";
 export interface TrayCallbacks {
   isListeningEnabled: () => boolean;
   onToggleListening: (isEnabled: boolean) => void;
+  onOpenSettings: () => void;
 }
 
 export class TrayManager {
@@ -39,6 +40,7 @@ export class TrayManager {
         label: isListening ? "Pause listening" : "Resume listening",
         click: () => callbacks.onToggleListening(!isListening),
       },
+      { label: "Settings…", click: () => callbacks.onOpenSettings() },
       { type: "separator" },
       { label: "Quit Huddle", click: () => app.quit() },
     ]);

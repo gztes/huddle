@@ -4,135 +4,175 @@
  * whenever a new HuddleOverlayState lands. Mirrors Clicky's panel.ts.
  */
 
-const hudStatusDotElement = document.getElementById("hud-status-dot") as HTMLDivElement;
-const setupNoticeElement = document.getElementById("setup-notice") as HTMLElement;
-const modelsNoticeElement = document.getElementById("models-notice") as HTMLElement;
-const modelsTitleElement = document.getElementById("models-title") as HTMLParagraphElement;
-const modelsProgressFillElement = document.getElementById("models-progress-fill") as HTMLDivElement;
-const microphoneNoticeElement = document.getElementById("microphone-notice") as HTMLElement;
-const transcriptLogElement = document.getElementById("transcript-log") as HTMLDivElement;
-const suggestionSectionElement = document.getElementById("suggestion-section") as HTMLElement;
-const suggestionTextElement = document.getElementById("suggestion-text") as HTMLParagraphElement;
-const errorSectionElement = document.getElementById("error-section") as HTMLElement;
-const errorTextElement = document.getElementById("error-text") as HTMLParagraphElement;
-const questionFormElement = document.getElementById("question-form") as HTMLFormElement;
-const questionInputElement = document.getElementById("question-input") as HTMLInputElement;
-const listeningIndicatorElement = document.getElementById("listening-indicator") as HTMLSpanElement;
+// Wrapped in an IIFE so this file's top-level `const`s get real function
+// scope instead of file ("script") scope. tsconfig.renderer.json compiles
+// every renderer/*.ts as one non-module project (module: "None"), so two
+// classic scripts with same-named top-level consts (this file and
+// settings.ts) would otherwise collide during type-checking even though
+// they're loaded into entirely separate windows at runtime. `export {}`
+// looked like the fix but isn't: with module "None", TS still emits a
+// CommonJS `exports` reference for a top-level export statement, which then
+// throws ReferenceError in a plain <script> tag — there's no `exports`
+// global outside Node/CommonJS. An IIFE avoids the whole problem.
+(function (): void {
+  const hudStatusDotElement = document.getElementById("hud-status-dot") as HTMLDivElement;
+  const setupNoticeElement = document.getElementById("setup-notice") as HTMLElement;
+  const modelsNoticeElement = document.getElementById("models-notice") as HTMLElement;
+  const modelsTitleElement = document.getElementById("models-title") as HTMLParagraphElement;
+  const modelsProgressFillElement = document.getElementById(
+    "models-progress-fill"
+  ) as HTMLDivElement;
+  const microphoneNoticeElement = document.getElementById("microphone-notice") as HTMLElement;
+  const transcriptLogElement = document.getElementById("transcript-log") as HTMLDivElement;
+  const suggestionSectionElement = document.getElementById("suggestion-section") as HTMLElement;
+  const suggestionTextElement = document.getElementById("suggestion-text") as HTMLParagraphElement;
+  const errorSectionElement = document.getElementById("error-section") as HTMLElement;
+  const errorTextElement = document.getElementById("error-text") as HTMLParagraphElement;
+  const questionFormElement = document.getElementById("question-form") as HTMLFormElement;
+  const questionInputElement = document.getElementById("question-input") as HTMLInputElement;
+  const listeningIndicatorElement = document.getElementById(
+    "listening-indicator"
+  ) as HTMLSpanElement;
+  const hotkeyHintElement = document.getElementById("hud-hotkey-hint") as HTMLSpanElement;
 
-function renderOverlayState(overlayState: HuddleOverlayState): void {
-  hudStatusDotElement.dataset.listening = String(overlayState.isListeningEnabled);
-  listeningIndicatorElement.textContent = overlayState.isListeningEnabled
-    ? "Listening"
-    : "Paused — resume from the tray icon";
+  let lastRenderedHotkeyLabel: string | null = null;
 
-  setupNoticeElement.classList.toggle("is-hidden", overlayState.isGeminiConfigured);
+  /** Rebuilds the toolbar's <kbd> pills from "Ctrl+Alt+H" — only when it actually changes. */
+  function renderHotkeyHint(hotkeyLabel: string): void {
+    if (hotkeyLabel === lastRenderedHotkeyLabel) {
+      return;
+    }
+    lastRenderedHotkeyLabel = hotkeyLabel;
 
-  renderModelsStatus(overlayState.modelsStatus);
+    const keyElements = hotkeyLabel.split("+").map((keyName) => {
+      const kbdElement = document.createElement("kbd");
+      kbdElement.textContent = keyName;
+      return kbdElement;
+    });
 
-  // Only nag about the microphone once the API key is in place, so the user
-  // isn't shown two blocking notices at once on first launch.
-  const shouldShowMicrophoneNotice =
-    overlayState.isGeminiConfigured && !overlayState.hasMicrophonePermission;
-  microphoneNoticeElement.classList.toggle("is-hidden", !shouldShowMicrophoneNotice);
+    const askLabelElement = document.createElement("span");
+    askLabelElement.textContent = "Ask";
 
-  renderTranscript(overlayState.recentTranscript);
-
-  const hasError = overlayState.lastErrorMessage !== null;
-  errorSectionElement.classList.toggle("is-hidden", !hasError);
-  errorTextElement.textContent = overlayState.lastErrorMessage ?? "";
-}
-
-function renderModelsStatus(modelsStatus: HuddleModelsStatus): void {
-  const shouldShowNotice = modelsStatus.state === "loading" || modelsStatus.state === "failed";
-  modelsNoticeElement.classList.toggle("is-hidden", !shouldShowNotice);
-
-  if (modelsStatus.state === "failed") {
-    modelsTitleElement.textContent = "Local models failed to download";
-    modelsProgressFillElement.style.width = "0%";
-    return;
+    hotkeyHintElement.replaceChildren(...keyElements, askLabelElement);
   }
 
-  modelsTitleElement.textContent = "Downloading local models";
-  modelsProgressFillElement.style.width = `${modelsStatus.progressPercent}%`;
-}
+  function renderOverlayState(overlayState: HuddleOverlayState): void {
+    hudStatusDotElement.dataset.listening = String(overlayState.isListeningEnabled);
+    listeningIndicatorElement.textContent = overlayState.isListeningEnabled
+      ? "Listening"
+      : "Paused — resume from the tray icon";
 
-function renderTranscript(recentTranscript: HuddleTranscriptLine[]): void {
-  if (recentTranscript.length === 0) {
-    const emptyStateElement = document.createElement("p");
-    emptyStateElement.id = "transcript-empty-state";
-    emptyStateElement.textContent = "Listening for the call…";
-    transcriptLogElement.replaceChildren(emptyStateElement);
-    return;
+    renderHotkeyHint(overlayState.hotkeyLabel);
+
+    setupNoticeElement.classList.toggle("is-hidden", overlayState.isGeminiConfigured);
+
+    renderModelsStatus(overlayState.modelsStatus);
+
+    // Only nag about the microphone once the API key is in place, so the user
+    // isn't shown two blocking notices at once on first launch.
+    const shouldShowMicrophoneNotice =
+      overlayState.isGeminiConfigured && !overlayState.hasMicrophonePermission;
+    microphoneNoticeElement.classList.toggle("is-hidden", !shouldShowMicrophoneNotice);
+
+    renderTranscript(overlayState.recentTranscript);
+
+    const hasError = overlayState.lastErrorMessage !== null;
+    errorSectionElement.classList.toggle("is-hidden", !hasError);
+    errorTextElement.textContent = overlayState.lastErrorMessage ?? "";
   }
 
-  transcriptLogElement.replaceChildren(
-    ...recentTranscript.map((line) => {
-      const lineElement = document.createElement("p");
-      lineElement.className = `transcript-line channel-${line.channel}`;
+  function renderModelsStatus(modelsStatus: HuddleModelsStatus): void {
+    const shouldShowNotice = modelsStatus.state === "loading" || modelsStatus.state === "failed";
+    modelsNoticeElement.classList.toggle("is-hidden", !shouldShowNotice);
 
-      const speakerSpan = document.createElement("span");
-      speakerSpan.className = "speaker";
-      speakerSpan.textContent = line.channel === "you" ? "You" : "Them";
+    if (modelsStatus.state === "failed") {
+      modelsTitleElement.textContent = "Local models failed to download";
+      modelsProgressFillElement.style.width = "0%";
+      return;
+    }
 
-      const textSpan = document.createElement("span");
-      textSpan.className = "text";
-      textSpan.textContent = line.text;
+    modelsTitleElement.textContent = "Downloading local models";
+    modelsProgressFillElement.style.width = `${modelsStatus.progressPercent}%`;
+  }
 
-      lineElement.append(speakerSpan, textSpan);
-      return lineElement;
-    })
-  );
-  transcriptLogElement.scrollTop = transcriptLogElement.scrollHeight;
-}
+  function renderTranscript(recentTranscript: HuddleTranscriptLine[]): void {
+    if (recentTranscript.length === 0) {
+      const emptyStateElement = document.createElement("p");
+      emptyStateElement.id = "transcript-empty-state";
+      emptyStateElement.textContent = "Listening for the call…";
+      transcriptLogElement.replaceChildren(emptyStateElement);
+      return;
+    }
 
-// -------------------------------------------------------------- suggestion
+    transcriptLogElement.replaceChildren(
+      ...recentTranscript.map((line) => {
+        const lineElement = document.createElement("p");
+        lineElement.className = `transcript-line channel-${line.channel}`;
 
-function showQuestionInput(): void {
-  questionFormElement.classList.remove("is-hidden");
-  questionInputElement.value = "";
-  questionInputElement.focus();
-}
+        const speakerSpan = document.createElement("span");
+        speakerSpan.className = "speaker";
+        speakerSpan.textContent = line.channel === "you" ? "You" : "Them";
 
-function hideQuestionInput(): void {
-  questionFormElement.classList.add("is-hidden");
-  questionInputElement.blur();
-}
+        const textSpan = document.createElement("span");
+        textSpan.className = "text";
+        textSpan.textContent = line.text;
 
-questionFormElement.addEventListener("submit", (submitEvent) => {
-  submitEvent.preventDefault();
-  const questionText = questionInputElement.value;
-  hideQuestionInput();
-  window.huddleOverlay.submitQuestion(questionText);
-});
+        lineElement.append(speakerSpan, textSpan);
+        return lineElement;
+      })
+    );
+    transcriptLogElement.scrollTop = transcriptLogElement.scrollHeight;
+  }
 
-questionInputElement.addEventListener("keydown", (keyboardEvent) => {
-  if (keyboardEvent.key === "Escape") {
+  // ------------------------------------------------------------ suggestion
+
+  function showQuestionInput(): void {
+    questionFormElement.classList.remove("is-hidden");
+    questionInputElement.value = "";
+    questionInputElement.focus();
+  }
+
+  function hideQuestionInput(): void {
+    questionFormElement.classList.add("is-hidden");
+    questionInputElement.blur();
+  }
+
+  questionFormElement.addEventListener("submit", (submitEvent) => {
+    submitEvent.preventDefault();
+    const questionText = questionInputElement.value;
     hideQuestionInput();
-    window.huddleOverlay.requestDismiss();
-  }
-});
+    window.huddleOverlay.submitQuestion(questionText);
+  });
 
-window.huddleOverlay.onShowInput(() => {
-  showQuestionInput();
-});
+  questionInputElement.addEventListener("keydown", (keyboardEvent) => {
+    if (keyboardEvent.key === "Escape") {
+      hideQuestionInput();
+      window.huddleOverlay.requestDismiss();
+    }
+  });
 
-window.huddleOverlay.onSuggestionStarted(() => {
-  errorSectionElement.classList.add("is-hidden");
-  suggestionSectionElement.classList.remove("is-hidden");
-  suggestionTextElement.textContent = "…";
-});
+  window.huddleOverlay.onShowInput(() => {
+    showQuestionInput();
+  });
 
-window.huddleOverlay.onSuggestionChunk((accumulatedText) => {
-  suggestionSectionElement.classList.remove("is-hidden");
-  suggestionTextElement.textContent = accumulatedText;
-});
+  window.huddleOverlay.onSuggestionStarted(() => {
+    errorSectionElement.classList.add("is-hidden");
+    suggestionSectionElement.classList.remove("is-hidden");
+    suggestionTextElement.textContent = "…";
+  });
 
-window.huddleOverlay.onSuggestionError((errorMessage) => {
-  errorSectionElement.classList.remove("is-hidden");
-  errorTextElement.textContent = errorMessage;
-});
+  window.huddleOverlay.onSuggestionChunk((accumulatedText) => {
+    suggestionSectionElement.classList.remove("is-hidden");
+    suggestionTextElement.textContent = accumulatedText;
+  });
 
-// -------------------------------------------------------------------- boot
+  window.huddleOverlay.onSuggestionError((errorMessage) => {
+    errorSectionElement.classList.remove("is-hidden");
+    errorTextElement.textContent = errorMessage;
+  });
 
-window.huddleOverlay.onStateUpdated(renderOverlayState);
-void window.huddleOverlay.requestState().then(renderOverlayState);
+  // ---------------------------------------------------------------- boot
+
+  window.huddleOverlay.onStateUpdated(renderOverlayState);
+  void window.huddleOverlay.requestState().then(renderOverlayState);
+})();

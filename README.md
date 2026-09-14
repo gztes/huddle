@@ -45,11 +45,22 @@ npm start
 ```
 
 Huddle appears in the system tray — no window, no taskbar entry — and a
-small HUD pins itself to the top-right corner of your primary display. Both
-audio channels start listening immediately; hold the hotkey (default
+small, resizable HUD pins itself to the top-right corner of your primary
+display (drag it by the pill toolbar, resize from any edge). Both audio
+channels start listening immediately; hold the hotkey (default
 **Ctrl+Alt+H**) any time you want a suggestion.
 
+### Settings
+
+Right-click the tray icon → **Settings…** for an in-app screen to set the
+Gemini key, rebind the hotkey (click "Change" and press a new combo), pick
+the model, and adjust the context-window/retention minutes — no `.env`
+editing required. Whatever you save there overrides `.env` from then on.
+
 ### What each key does
+
+`.env` is just the bootstrap value for each of these — anything saved from
+the Settings window takes over from then on.
 
 | Variable | Required? | Effect |
 |---|---|---|
@@ -81,10 +92,27 @@ from for the reasoning:
 
 - No screen vision (audio + transcript only)
 - No spoken/TTS output — the overlay is silent, text-only
-- No persistent history across calls (in-memory per session only)
+- No persistent history across calls (in-memory per session only, for now —
+  see Roadmap)
 - No per-process audio isolation — system-audio capture is the whole output
   device, not just the call app
-- No settings UI — everything is `.env`-configured
+
+## Roadmap
+
+Agreed build order for turning this from a single-purpose tool into
+something closer to a full app, each as its own scoped piece of work:
+
+1. ✅ **Settings UI** — done, see above.
+2. **Quick Actions on suggestions** — follow-up buttons under a response
+   (follow-up questions, define a term, search the web via Gemini's Google
+   Search grounding).
+3. **Session history** — persisting transcripts across restarts. This is a
+   deliberate change to the privacy stance below: history will stay
+   **local-only** (never uploaded anywhere), but will survive a restart,
+   unlike the current in-memory-only behavior.
+4. **Calendar integration** — OAuth against Google Calendar/Outlook to
+   pre-load context for upcoming meetings. The biggest, most separate piece;
+   built last.
 
 ## Project structure
 
@@ -96,13 +124,15 @@ src/
     geminiClient.ts              # Gemini SSE streaming + the suggestion system prompt
     transcriptStore.ts           # rolling in-memory transcript, retention window
     globalHotkey.ts              # parses "Ctrl+Alt+H" style strings, single-press trigger
-    overlayWindow.ts             # the content-protected HUD window
+    overlayWindow.ts             # the content-protected, resizable HUD window
+    settingsWindow.ts            # the Settings window (not content-protected)
     captureWindow.ts             # hidden window hosting mic/system-audio capture + VAD + Whisper
-    trayManager.ts               # system tray icon (pause listening, quit)
-    config.ts                    # .env loading, endpoints, persisted preferences
+    trayManager.ts               # system tray icon (pause listening, settings, quit)
+    config.ts                    # .env loading, endpoints, persisted preferences/overrides
   preload/                    # contextBridge APIs, one per window type
   renderer/
     overlay/                    # the HUD: transcript log, suggestion, question input
+    settings/                   # API key, hotkey rebinding, model, timing fields
     capture/                    # mic + system-audio capture, Silero VAD, local Whisper
   shared/                     # types and IPC channel names
 ```

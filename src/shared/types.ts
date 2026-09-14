@@ -35,4 +35,20 @@ export interface OverlayState {
   suggestionState: SuggestionState;
   suggestionText: string;
   lastErrorMessage: string | null;
+  /** e.g. "Ctrl+Alt+H" — drives the toolbar hint, kept in sync with config. */
+  hotkeyLabel: string;
+}
+
+export const AVAILABLE_GEMINI_MODELS = [
+  { identifier: "gemini-2.5-flash", displayName: "2.5 Flash", description: "faster, cheaper" },
+  { identifier: "gemini-2.5-pro", displayName: "2.5 Pro", description: "smarter, slower" },
+] as const;
+
+/** The full set of user-configurable values the settings window edits. */
+export interface SettingsState {
+  geminiApiKey: string;
+  hotkey: string;
+  modelIdentifier: string;
+  contextWindowMinutes: number;
+  transcriptRetentionMinutes: number;
 }
