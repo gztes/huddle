@@ -18,6 +18,17 @@ const OVERLAY_WIDTH_PIXELS = 440;
 const OVERLAY_HEIGHT_PIXELS = 520;
 const OVERLAY_MARGIN_PIXELS = 24;
 
+/**
+ * `setContentProtection(true)` isn't applied atomically — DWM needs a beat to
+ * start excluding the window from capture, so showing it immediately after
+ * calling this can leak a frame or two into a screen-share/recording that
+ * started just before. A sibling project (natively-cluely-ai-assistant)
+ * documented hitting exactly this; Huddle has no automated way to reproduce
+ * a one-frame leak, so this is a cheap defensive delay rather than a
+ * verified fix for an observed bug here.
+ */
+const CONTENT_PROTECTION_SETTLE_DELAY_MS = 75;
+
 export interface OverlayWindowCallbacks {
   onRequestState: () => OverlayState;
   onSubmitQuestion: (questionText: string) => void;
@@ -85,7 +96,13 @@ export class OverlayWindow {
 
     this.browserWindow.once("ready-to-show", () => {
       console.log("[overlay] ready-to-show — showing HUD");
-      this.browserWindow?.showInactive();
+      // Re-assert protection immediately before the first real show, then
+      // give DWM a moment to apply it before the window actually appears.
+      // See CONTENT_PROTECTION_SETTLE_DELAY_MS above for why.
+      this.browserWindow?.setContentProtection(true);
+      setTimeout(() => {
+        this.browserWindow?.showInactive();
+      }, CONTENT_PROTECTION_SETTLE_DELAY_MS);
     });
 
     this.registerIpcHandlers(callbacks);
