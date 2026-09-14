@@ -1,0 +1,29 @@
+{
+  "name": "huddle",
+  "version": "0.1.0",
+  "description": "A covert, invisible-while-screen-sharing call companion: transcribes both sides of a meeting locally, and on a hotkey, asks Gemini for a suggestion.",
+  "main": "dist/main/index.js",
+  "private": true,
+  "scripts": {
+    "generate-icons": "node scripts/generate-icons.js",
+    "copy-static": "node scripts/copy-static.js",
+    "build": "tsc -p tsconfig.main.json && tsc -p tsconfig.renderer.json && npm run build:capture && npm run copy-static",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && electron . --enable-logging",
+    "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.renderer.json --noEmit && tsc -p tsconfig.capture.json",
+    "build:capture": "esbuild src/renderer/capture/capture.ts --bundle --format=iife --outfile=dist/renderer/capture/capture.js --platform=browser --target=chrome128 --sourcemap",
+    "verify": "node scripts/verify-api-key.js"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
+    "@ricky0123/vad-web": "^0.0.31",
+    "onnxruntime-web": "^1.17.0",
+    "uiohook-napi": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "electron": "^33.2.1",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.7.2"
+  }
+}
