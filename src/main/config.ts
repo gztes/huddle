@@ -11,7 +11,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 const DEFAULT_MODEL_IDENTIFIER = "gemini-2.5-flash";
-const DEFAULT_HOTKEY = "Ctrl+Alt+Space";
+const DEFAULT_HOTKEY = "Ctrl+Alt+H";
 const DEFAULT_CONTEXT_WINDOW_MINUTES = 5;
 const DEFAULT_TRANSCRIPT_RETENTION_MINUTES = 30;
 
@@ -169,7 +169,7 @@ export function chatAuthHeaders(): Record<string, string> {
 
 // -------------------------------------------------------------- hotkey + timing
 
-/** e.g. "Ctrl+Alt+Space" — parsed by globalHotkey.ts into individual keys. */
+/** e.g. "Ctrl+Alt+H" — parsed by globalHotkey.ts into individual keys. */
 export function suggestionHotkey(): string {
   return configuredValue("HUDDLE_HOTKEY") || DEFAULT_HOTKEY;
 }

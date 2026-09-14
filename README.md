@@ -47,14 +47,14 @@ npm start
 Huddle appears in the system tray — no window, no taskbar entry — and a
 small HUD pins itself to the top-right corner of your primary display. Both
 audio channels start listening immediately; hold the hotkey (default
-**Ctrl+Alt+Space**) any time you want a suggestion.
+**Ctrl+Alt+H**) any time you want a suggestion.
 
 ### What each key does
 
 | Variable | Required? | Effect |
 |---|---|---|
 | `GEMINI_API_KEY` | **Yes** | The only thing Huddle can't work without |
-| `HUDDLE_HOTKEY` | No | The suggestion hotkey (default `Ctrl+Alt+Space`) |
+| `HUDDLE_HOTKEY` | No | The suggestion hotkey (default `Ctrl+Alt+H`) |
 | `HUDDLE_MODEL` | No | Gemini model id (default `gemini-2.5-flash`) |
 | `HUDDLE_CONTEXT_WINDOW_MINUTES` | No | How much recent transcript is sent per suggestion (default 5) |
 | `HUDDLE_TRANSCRIPT_RETENTION_MINUTES` | No | How long transcript lines stay in memory at all (default 30) |
@@ -95,7 +95,7 @@ src/
     callManager.ts               # orchestrator — wires capture, overlay, hotkey, Gemini together
     geminiClient.ts              # Gemini SSE streaming + the suggestion system prompt
     transcriptStore.ts           # rolling in-memory transcript, retention window
-    globalHotkey.ts              # parses "Ctrl+Alt+Space" style strings, single-press trigger
+    globalHotkey.ts              # parses "Ctrl+Alt+H" style strings, single-press trigger
     overlayWindow.ts             # the content-protected HUD window
     captureWindow.ts             # hidden window hosting mic/system-audio capture + VAD + Whisper
     trayManager.ts               # system tray icon (pause listening, quit)

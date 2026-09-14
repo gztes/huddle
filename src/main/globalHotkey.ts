@@ -1,5 +1,5 @@
 /**
- * A single-press system-wide hotkey, e.g. "Ctrl+Alt+Space".
+ * A single-press system-wide hotkey, e.g. "Ctrl+Alt+H".
  *
  * Uses uiohook-napi, the same listen-only keyboard hook Clicky uses for
  * push-to-talk — Electron's built-in `globalShortcut` would work here too
@@ -35,7 +35,7 @@ interface ParsedHotkey {
   triggerKeyCode: number;
 }
 
-/** Parses "Ctrl+Alt+Space" into modifier requirements plus one trigger keycode. */
+/** Parses "Ctrl+Alt+H" into modifier requirements plus one trigger keycode. */
 function parseHotkeyString(hotkeyString: string): ParsedHotkey {
   const tokens = hotkeyString.split("+").map((token) => token.trim().toLowerCase());
 
