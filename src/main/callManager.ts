@@ -25,6 +25,20 @@ import type {
 
 const DISPLAYED_TRANSCRIPT_LINE_COUNT = 12;
 
+/**
+ * How often Huddle auto-refreshes the suggestion card without being asked —
+ * a "live insights" mode instead of purely hotkey-triggered. Periodic rather
+ * than per-line: per-line would mean a Gemini call for every VAD segment,
+ * which on a fast-moving conversation could be many calls a minute. This
+ * bounds it to roughly one call per half-minute of active talking, and only
+ * that often if there's actually something new to react to.
+ */
+const AUTO_REFRESH_INTERVAL_MS = 35_000;
+
+const AUTO_REFRESH_PROMPT =
+  "Give a brief live update: a 1-2 sentence summary of where things stand, " +
+  "then any action items, then a short suggestion for what to say or do next.";
+
 export class CallManager {
   private readonly transcriptStore = new TranscriptStore();
   private readonly sessionHistory = new SessionHistory();
@@ -43,6 +57,10 @@ export class CallManager {
   private currentSuggestionAbortController: AbortController | null = null;
   /** The most recently finished exchange, so a Quick Action can build on it. */
   private lastExchange: SuggestionExchange | null = null;
+
+  private autoRefreshTimer: ReturnType<typeof setInterval> | null = null;
+  /** Wall-clock watermark — an auto-refresh only fires if a line arrived after this. */
+  private lastAutoRefreshAtMs = 0;
 
   start(): void {
     this.sessionHistory.startSession();
@@ -87,10 +105,16 @@ export class CallManager {
       this.captureWindow.probeMicrophonePermission();
       this.captureWindow.setListeningEnabled(config.isListeningEnabled());
     }, 1000);
+
+    this.autoRefreshTimer = setInterval(() => this.maybeAutoRefreshSuggestion(), AUTO_REFRESH_INTERVAL_MS);
   }
 
   stop(): void {
     this.globalHotkey?.stop();
+    if (this.autoRefreshTimer !== null) {
+      clearInterval(this.autoRefreshTimer);
+      this.autoRefreshTimer = null;
+    }
     this.captureWindow.destroy();
     this.overlayWindow.destroy();
     this.settingsWindow.destroy();
@@ -172,7 +196,38 @@ export class CallManager {
       );
       return;
     }
+    this.runSuggestionRequest(submission.questionText, submission.enableWebSearch);
+  }
 
+  /**
+   * Checks whether it's worth auto-refreshing the suggestion card without
+   * being asked. Skips quietly (no error, no log spam) on any of: no key
+   * configured, listening paused, a request already in flight (never steps
+   * on a manual ask that's still streaming), or nothing new since the last
+   * refresh. Note this will happily overwrite a manual answer that finished
+   * a while ago — "live insights" are meant to supersede what came before,
+   * same as Cluely's; there's no separate "pin this answer" affordance.
+   */
+  private maybeAutoRefreshSuggestion(): void {
+    if (!config.isGeminiConfigured() || !config.isListeningEnabled()) {
+      return;
+    }
+    if (this.currentSuggestionAbortController !== null) {
+      return;
+    }
+    const hasNewLines = this.transcriptStore
+      .recentLines()
+      .some((line) => line.timestampMs > this.lastAutoRefreshAtMs);
+    if (!hasNewLines) {
+      return;
+    }
+
+    console.log("Auto-refreshing suggestion (new conversation since last check)");
+    this.runSuggestionRequest(AUTO_REFRESH_PROMPT, false);
+  }
+
+  /** Shared by both a typed/Quick Action question and the periodic auto-refresh. */
+  private runSuggestionRequest(questionText: string, enableWebSearch: boolean): void {
     this.currentSuggestionAbortController?.abort();
     const abortController = new AbortController();
     this.currentSuggestionAbortController = abortController;
@@ -188,9 +243,9 @@ export class CallManager {
 
     void requestStreamingSuggestion({
       transcriptLines,
-      typedQuestion: submission.questionText,
+      typedQuestion: questionText,
       priorExchanges,
-      enableWebSearch: submission.enableWebSearch,
+      enableWebSearch,
       abortSignal: abortController.signal,
       onTextChunk: (accumulatedText) => {
         this.suggestionText = accumulatedText;
@@ -202,10 +257,8 @@ export class CallManager {
           return;
         }
         this.suggestionState = "idle";
-        this.lastExchange = {
-          userQuestion: submission.questionText,
-          suggestionText: finalSuggestionText,
-        };
+        this.lastExchange = { userQuestion: questionText, suggestionText: finalSuggestionText };
+        this.lastAutoRefreshAtMs = Date.now();
         // The overlay only knows streaming finished once this lands — it has
         // no other terminal event on success, only started/chunk/error.
         this.publishOverlayState();
