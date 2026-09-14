@@ -52,7 +52,7 @@ interface HuddleSettingsApi {
 
 interface HuddleOverlayApi {
   requestState(): Promise<HuddleOverlayState>;
-  submitQuestion(questionText: string): void;
+  submitQuestion(questionText: string, enableWebSearch: boolean): void;
   requestDismiss(): void;
   onStateUpdated(handleStateUpdate: (overlayState: HuddleOverlayState) => void): void;
   onShowInput(handleShowInput: () => void): void;

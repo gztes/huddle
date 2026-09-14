@@ -4,15 +4,16 @@
 
 import { contextBridge, ipcRenderer } from "electron";
 import { IpcChannels } from "../shared/ipcChannels";
-import type { OverlayState } from "../shared/types";
+import type { OverlayState, QuestionSubmission } from "../shared/types";
 
 contextBridge.exposeInMainWorld("huddleOverlay", {
   // ---- renderer → main ----
 
   requestState: (): Promise<OverlayState> => ipcRenderer.invoke(IpcChannels.overlayRequestState),
 
-  submitQuestion: (questionText: string): void => {
-    ipcRenderer.send(IpcChannels.overlaySubmitQuestion, questionText);
+  submitQuestion: (questionText: string, enableWebSearch: boolean): void => {
+    const submission: QuestionSubmission = { questionText, enableWebSearch };
+    ipcRenderer.send(IpcChannels.overlaySubmitQuestion, submission);
   },
 
   requestDismiss: (): void => {

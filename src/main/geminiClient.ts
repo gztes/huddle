@@ -23,6 +23,7 @@ rules:
 - if the transcript doesn't give you enough to say anything useful yet, say so briefly rather than inventing advice.
 - plain text only. no markdown headers, no bold, a simple "-" for bullets is fine.
 - never break character or mention that you are an AI, a prompt, or a tool — the output is only ever the suggestion itself.
+- if you have live search results available, pull out only the 1-3 facts that actually matter right now — no source lists, no "according to".
 
 the transcript below is labeled "You:" for the user's own speech and "Them:" for the other party, in chronological order.`;
 
@@ -53,6 +54,8 @@ export async function requestStreamingSuggestion(options: {
   transcriptLines: TranscriptLine[];
   typedQuestion: string;
   priorExchanges: SuggestionExchange[];
+  /** Turns on Gemini's Google Search grounding tool — used by the "Search the web" Quick Action. */
+  enableWebSearch: boolean;
   abortSignal: AbortSignal;
   onTextChunk: (accumulatedText: string) => void;
 }): Promise<string> {
@@ -81,6 +84,7 @@ export async function requestStreamingSuggestion(options: {
       max_output_tokens: 512,
       thinking_config: thinkingConfigForModel(modelIdentifier()),
     },
+    ...(options.enableWebSearch ? { tools: [{ google_search: {} }] } : {}),
     contents,
   };
 

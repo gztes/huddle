@@ -12,7 +12,7 @@
 import { BrowserWindow, ipcMain, screen } from "electron";
 import * as path from "path";
 import { IpcChannels } from "../shared/ipcChannels";
-import type { OverlayState } from "../shared/types";
+import type { OverlayState, QuestionSubmission } from "../shared/types";
 
 const OVERLAY_WIDTH_PIXELS = 440;
 const OVERLAY_HEIGHT_PIXELS = 520;
@@ -35,7 +35,7 @@ const CONTENT_PROTECTION_SETTLE_DELAY_MS = 75;
 
 export interface OverlayWindowCallbacks {
   onRequestState: () => OverlayState;
-  onSubmitQuestion: (questionText: string) => void;
+  onSubmitQuestion: (submission: QuestionSubmission) => void;
   onRequestDismiss: () => void;
 }
 
@@ -119,8 +119,8 @@ export class OverlayWindow {
   private registerIpcHandlers(callbacks: OverlayWindowCallbacks): void {
     ipcMain.handle(IpcChannels.overlayRequestState, () => callbacks.onRequestState());
 
-    ipcMain.on(IpcChannels.overlaySubmitQuestion, (_event, questionText: string) => {
-      callbacks.onSubmitQuestion(questionText);
+    ipcMain.on(IpcChannels.overlaySubmitQuestion, (_event, submission: QuestionSubmission) => {
+      callbacks.onSubmitQuestion(submission);
     });
 
     ipcMain.on(IpcChannels.overlayRequestDismiss, () => {
