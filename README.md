@@ -103,9 +103,12 @@ Agreed build order for turning this from a single-purpose tool into
 something closer to a full app, each as its own scoped piece of work:
 
 1. ✅ **Settings UI** — done, see above.
-2. **Quick Actions on suggestions** — follow-up buttons under a response
-   (follow-up questions, define a term, search the web via Gemini's Google
-   Search grounding).
+2. ✅ **Quick Actions on suggestions** — three chips appear under a finished
+   suggestion: "Follow-up questions," "More detail," and "Search the web"
+   (real live grounding via Gemini's Google Search tool, verified against
+   the actual API). Skipped a dedicated "define a term" chip — the existing
+   free-text question box already covers it ("define X") without needing
+   Gemini to guess which term matters.
 3. **Session history** — persisting transcripts across restarts. This is a
    deliberate change to the privacy stance below: history will stay
    **local-only** (never uploaded anywhere), but will survive a restart,

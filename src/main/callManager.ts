@@ -7,7 +7,7 @@
 
 import * as config from "./config";
 import { CaptureWindow } from "./captureWindow";
-import { requestStreamingSuggestion } from "./geminiClient";
+import { requestStreamingSuggestion, type SuggestionExchange } from "./geminiClient";
 import { GlobalHotkey } from "./globalHotkey";
 import { OverlayWindow } from "./overlayWindow";
 import { SettingsWindow } from "./settingsWindow";
@@ -15,6 +15,7 @@ import { TranscriptStore } from "./transcriptStore";
 import type {
   ModelsStatus,
   OverlayState,
+  QuestionSubmission,
   SettingsState,
   SuggestionState,
   TranscriptLine,
@@ -36,11 +37,13 @@ export class CallManager {
   private suggestionState: SuggestionState = "idle";
   private suggestionText = "";
   private currentSuggestionAbortController: AbortController | null = null;
+  /** The most recently finished exchange, so a Quick Action can build on it. */
+  private lastExchange: SuggestionExchange | null = null;
 
   start(): void {
     this.overlayWindow.create({
       onRequestState: () => this.currentOverlayState(),
-      onSubmitQuestion: (questionText) => this.handleSubmitQuestion(questionText),
+      onSubmitQuestion: (submission) => this.handleSubmitQuestion(submission),
       onRequestDismiss: () => this.handleRequestDismiss(),
     });
 
@@ -142,7 +145,7 @@ export class CallManager {
 
   // ------------------------------------------------------------ suggestions
 
-  private handleSubmitQuestion(questionText: string): void {
+  private handleSubmitQuestion(submission: QuestionSubmission): void {
     if (!config.isGeminiConfigured()) {
       this.overlayWindow.sendSuggestionError(
         "Add GEMINI_API_KEY to your .env before asking for a suggestion."
@@ -159,22 +162,33 @@ export class CallManager {
     this.overlayWindow.sendSuggestionStarted();
 
     const transcriptLines = this.transcriptStore.linesWithinMinutes(config.contextWindowMinutes());
+    // Quick Actions ("more detail", "follow-up questions") only make sense
+    // with the prior round in context; a fresh hotkey press starts clean.
+    const priorExchanges = this.lastExchange !== null ? [this.lastExchange] : [];
 
     void requestStreamingSuggestion({
       transcriptLines,
-      typedQuestion: questionText,
-      priorExchanges: [],
+      typedQuestion: submission.questionText,
+      priorExchanges,
+      enableWebSearch: submission.enableWebSearch,
       abortSignal: abortController.signal,
       onTextChunk: (accumulatedText) => {
         this.suggestionText = accumulatedText;
         this.overlayWindow.sendSuggestionChunk(accumulatedText);
       },
     })
-      .then(() => {
+      .then((finalSuggestionText) => {
         if (abortController.signal.aborted) {
           return;
         }
         this.suggestionState = "idle";
+        this.lastExchange = {
+          userQuestion: submission.questionText,
+          suggestionText: finalSuggestionText,
+        };
+        // The overlay only knows streaming finished once this lands — it has
+        // no other terminal event on success, only started/chunk/error.
+        this.publishOverlayState();
       })
       .catch((suggestionError: unknown) => {
         if (abortController.signal.aborted) {

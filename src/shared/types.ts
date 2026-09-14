@@ -24,6 +24,16 @@ export interface ModelsStatus {
 
 export type SuggestionState = "idle" | "streaming" | "error";
 
+/**
+ * A question sent to Gemini — either typed freely, or one of the Quick
+ * Action chips shown under a finished suggestion. `enableWebSearch` turns on
+ * Gemini's Google Search grounding tool for this one request.
+ */
+export interface QuestionSubmission {
+  questionText: string;
+  enableWebSearch: boolean;
+}
+
 /** State the overlay renderer needs to draw itself. */
 export interface OverlayState {
   isListeningEnabled: boolean;

@@ -26,6 +26,7 @@
   const transcriptLogElement = document.getElementById("transcript-log") as HTMLDivElement;
   const suggestionSectionElement = document.getElementById("suggestion-section") as HTMLElement;
   const suggestionTextElement = document.getElementById("suggestion-text") as HTMLParagraphElement;
+  const quickActionsElement = document.getElementById("quick-actions") as HTMLDivElement;
   const errorSectionElement = document.getElementById("error-section") as HTMLElement;
   const errorTextElement = document.getElementById("error-text") as HTMLParagraphElement;
   const questionFormElement = document.getElementById("question-form") as HTMLFormElement;
@@ -79,6 +80,12 @@
     const hasError = overlayState.lastErrorMessage !== null;
     errorSectionElement.classList.toggle("is-hidden", !hasError);
     errorTextElement.textContent = overlayState.lastErrorMessage ?? "";
+
+    // Quick Actions only make sense once a suggestion has actually finished —
+    // offering "more detail" mid-stream, or on a stale/errored one, is confusing.
+    const shouldShowQuickActions =
+      overlayState.suggestionState === "idle" && overlayState.suggestionText.length > 0;
+    quickActionsElement.classList.toggle("is-hidden", !shouldShowQuickActions);
   }
 
   function renderModelsStatus(modelsStatus: HuddleModelsStatus): void {
@@ -141,7 +148,7 @@
     submitEvent.preventDefault();
     const questionText = questionInputElement.value;
     hideQuestionInput();
-    window.huddleOverlay.submitQuestion(questionText);
+    window.huddleOverlay.submitQuestion(questionText, false);
   });
 
   questionInputElement.addEventListener("keydown", (keyboardEvent) => {
@@ -155,9 +162,42 @@
     showQuestionInput();
   });
 
+  // ------------------------------------------------------------- quick actions
+
+  /** Canned prompts + whether Google Search grounding should be on, per chip. */
+  const QUICK_ACTION_PROMPTS: Record<string, { prompt: string; enableWebSearch: boolean }> = {
+    "follow-up": {
+      prompt: "Suggest 2-3 good follow-up questions I could ask them right now, based on the conversation so far.",
+      enableWebSearch: false,
+    },
+    "more-detail": {
+      prompt: "Go deeper on your last suggestion — more specific, more actionable detail.",
+      enableWebSearch: false,
+    },
+    "search-web": {
+      prompt: "Search the web for anything relevant to what was just discussed and give me the key facts.",
+      enableWebSearch: true,
+    },
+  };
+
+  quickActionsElement.addEventListener("click", (clickEvent) => {
+    const clickedChip = (clickEvent.target as HTMLElement).closest<HTMLButtonElement>(
+      ".quick-action-chip"
+    );
+    if (clickedChip === null) {
+      return;
+    }
+    const actionConfig = QUICK_ACTION_PROMPTS[clickedChip.dataset.action ?? ""];
+    if (actionConfig === undefined) {
+      return;
+    }
+    window.huddleOverlay.submitQuestion(actionConfig.prompt, actionConfig.enableWebSearch);
+  });
+
   window.huddleOverlay.onSuggestionStarted(() => {
     errorSectionElement.classList.add("is-hidden");
     suggestionSectionElement.classList.remove("is-hidden");
+    quickActionsElement.classList.add("is-hidden");
     suggestionTextElement.textContent = "…";
   });
 
