@@ -31,6 +31,9 @@
     "context-window-input"
   ) as HTMLInputElement;
   const retentionInputElement = document.getElementById("retention-input") as HTMLInputElement;
+  const calendarIcsUrlInputElement = document.getElementById(
+    "calendar-ics-url-input"
+  ) as HTMLInputElement;
   const errorTextElement = document.getElementById("error-text") as HTMLParagraphElement;
   const closeButton = document.getElementById("close-button") as HTMLButtonElement;
   const cancelButton = document.getElementById("cancel-button") as HTMLButtonElement;
@@ -83,6 +86,7 @@
     renderModelSelection();
     contextWindowInputElement.value = String(settingsState.contextWindowMinutes);
     retentionInputElement.value = String(settingsState.transcriptRetentionMinutes);
+    calendarIcsUrlInputElement.value = settingsState.calendarIcsUrl;
   }
 
   // ------------------------------------------------------------ hotkey capture
@@ -164,6 +168,7 @@
       modelIdentifier: selectedModelIdentifier,
       contextWindowMinutes: Number(contextWindowInputElement.value),
       transcriptRetentionMinutes: Number(retentionInputElement.value),
+      calendarIcsUrl: calendarIcsUrlInputElement.value,
     };
 
     window.huddleSettings.save(update);

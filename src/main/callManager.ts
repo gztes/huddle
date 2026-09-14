@@ -6,6 +6,7 @@
  */
 
 import * as config from "./config";
+import { CalendarClient } from "./calendarClient";
 import { CaptureWindow } from "./captureWindow";
 import { requestStreamingSuggestion, type SuggestionExchange } from "./geminiClient";
 import { GlobalHotkey } from "./globalHotkey";
@@ -39,9 +40,16 @@ const AUTO_REFRESH_PROMPT =
   "Give a brief live update: a 1-2 sentence summary of where things stand, " +
   "then any action items, then a short suggestion for what to say or do next.";
 
+/** Meetings don't move that often — no need for the 35s suggestion cadence. */
+const CALENDAR_REFRESH_INTERVAL_MS = 10 * 60_000;
+
+/** How far ahead an upcoming meeting still gets a tray "Next:" label. */
+const NEXT_MEETING_LOOKAHEAD_MS = 24 * 60 * 60_000;
+
 export class CallManager {
   private readonly transcriptStore = new TranscriptStore();
   private readonly sessionHistory = new SessionHistory();
+  private readonly calendarClient = new CalendarClient();
   private readonly overlayWindow = new OverlayWindow();
   private readonly captureWindow = new CaptureWindow();
   private readonly settingsWindow = new SettingsWindow();
@@ -62,8 +70,18 @@ export class CallManager {
   /** Wall-clock watermark — an auto-refresh only fires if a line arrived after this. */
   private lastAutoRefreshAtMs = 0;
 
+  private calendarRefreshTimer: ReturnType<typeof setInterval> | null = null;
+
   start(): void {
-    this.sessionHistory.startSession();
+    const startedAtMs = Date.now();
+    // Session recording starts once the calendar feed (if any) has been
+    // fetched, so the session's calendarEventTitle can be set at creation
+    // rather than patched in later. An empty/unconfigured URL resolves
+    // immediately, so this is a no-op delay in the common case.
+    void this.calendarClient.refresh().then(() => {
+      const overlappingEvent = this.calendarClient.eventContaining(startedAtMs);
+      this.sessionHistory.startSession(overlappingEvent?.title ?? null);
+    });
 
     this.overlayWindow.create({
       onRequestState: () => this.currentOverlayState(),
@@ -107,6 +125,10 @@ export class CallManager {
     }, 1000);
 
     this.autoRefreshTimer = setInterval(() => this.maybeAutoRefreshSuggestion(), AUTO_REFRESH_INTERVAL_MS);
+    this.calendarRefreshTimer = setInterval(
+      () => void this.calendarClient.refresh(),
+      CALENDAR_REFRESH_INTERVAL_MS
+    );
   }
 
   stop(): void {
@@ -114,6 +136,10 @@ export class CallManager {
     if (this.autoRefreshTimer !== null) {
       clearInterval(this.autoRefreshTimer);
       this.autoRefreshTimer = null;
+    }
+    if (this.calendarRefreshTimer !== null) {
+      clearInterval(this.calendarRefreshTimer);
+      this.calendarRefreshTimer = null;
     }
     this.captureWindow.destroy();
     this.overlayWindow.destroy();
@@ -137,6 +163,27 @@ export class CallManager {
 
   openHistory(): void {
     this.historyWindow.show();
+  }
+
+  /** Computed live each time the tray menu opens — see TrayCallbacks.nextMeetingLabel. */
+  nextMeetingLabel(): string | null {
+    const nowMs = Date.now();
+
+    const currentEvent = this.calendarClient.eventContaining(nowMs);
+    if (currentEvent !== null) {
+      return `Now: ${currentEvent.title}`;
+    }
+
+    const upcomingEvent = this.calendarClient.nextEvent(nowMs);
+    if (upcomingEvent !== null && upcomingEvent.startMs - nowMs <= NEXT_MEETING_LOOKAHEAD_MS) {
+      const timeLabel = new Date(upcomingEvent.startMs).toLocaleTimeString(undefined, {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+      return `Next: ${upcomingEvent.title} at ${timeLabel}`;
+    }
+
+    return null;
   }
 
   // -------------------------------------------------------------- hotkey

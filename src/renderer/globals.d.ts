@@ -40,6 +40,7 @@ interface HuddleSettingsState {
   modelIdentifier: string;
   contextWindowMinutes: number;
   transcriptRetentionMinutes: number;
+  calendarIcsUrl: string;
 }
 
 interface HuddleSettingsApi {
@@ -78,6 +79,7 @@ interface HuddleSessionSummary {
   lineCount: number;
   previewText: string;
   hasSummary: boolean;
+  calendarEventTitle: string | null;
 }
 
 interface HuddleStoredSession {
@@ -86,6 +88,7 @@ interface HuddleStoredSession {
   updatedAtMs: number;
   lines: HuddleTranscriptLine[];
   summary: string | null;
+  calendarEventTitle: string | null;
 }
 
 interface HuddleHistoryApi {
