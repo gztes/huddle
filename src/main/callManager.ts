@@ -9,7 +9,9 @@ import * as config from "./config";
 import { CaptureWindow } from "./captureWindow";
 import { requestStreamingSuggestion, type SuggestionExchange } from "./geminiClient";
 import { GlobalHotkey } from "./globalHotkey";
+import { HistoryWindow } from "./historyWindow";
 import { OverlayWindow } from "./overlayWindow";
+import { SessionHistory } from "./sessionHistory";
 import { SettingsWindow } from "./settingsWindow";
 import { TranscriptStore } from "./transcriptStore";
 import type {
@@ -25,9 +27,11 @@ const DISPLAYED_TRANSCRIPT_LINE_COUNT = 12;
 
 export class CallManager {
   private readonly transcriptStore = new TranscriptStore();
+  private readonly sessionHistory = new SessionHistory();
   private readonly overlayWindow = new OverlayWindow();
   private readonly captureWindow = new CaptureWindow();
   private readonly settingsWindow = new SettingsWindow();
+  private readonly historyWindow = new HistoryWindow();
   private globalHotkey: GlobalHotkey | null = null;
 
   private modelsStatus: ModelsStatus = { state: "idle", progressPercent: 0 };
@@ -41,6 +45,8 @@ export class CallManager {
   private lastExchange: SuggestionExchange | null = null;
 
   start(): void {
+    this.sessionHistory.startSession();
+
     this.overlayWindow.create({
       onRequestState: () => this.currentOverlayState(),
       onSubmitQuestion: (submission) => this.handleSubmitQuestion(submission),
@@ -69,6 +75,13 @@ export class CallManager {
       onSave: (update) => this.handleSettingsSave(update),
     });
 
+    this.historyWindow.create({
+      onRequestSessions: () => this.sessionHistory.listSessions(),
+      onRequestSessionDetail: (sessionId) => this.sessionHistory.loadSession(sessionId),
+      onDeleteSession: (sessionId) => this.sessionHistory.deleteSession(sessionId),
+      onDeleteAllSessions: () => this.sessionHistory.deleteAllSessions(),
+    });
+
     setTimeout(() => {
       this.captureWindow.probeMicrophonePermission();
       this.captureWindow.setListeningEnabled(config.isListeningEnabled());
@@ -80,6 +93,7 @@ export class CallManager {
     this.captureWindow.destroy();
     this.overlayWindow.destroy();
     this.settingsWindow.destroy();
+    this.historyWindow.destroy();
   }
 
   isListeningEnabled(): boolean {
@@ -94,6 +108,10 @@ export class CallManager {
 
   openSettings(): void {
     this.settingsWindow.show();
+  }
+
+  openHistory(): void {
+    this.historyWindow.show();
   }
 
   // -------------------------------------------------------------- hotkey
@@ -140,6 +158,7 @@ export class CallManager {
   private handleTranscriptSegment(line: TranscriptLine): void {
     console.log(`[${line.channel}] "${line.text}"`);
     this.transcriptStore.append(line);
+    this.sessionHistory.appendLine(line);
     this.publishOverlayState();
   }
 

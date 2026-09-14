@@ -36,4 +36,11 @@ export const IpcChannels = {
   // ---- Main → settings renderer ----
   settingsSaved: "settings:saved",
   settingsSaveFailed: "settings:save-failed",
+
+  // ---- History renderer → main ----
+  historyRequestSessions: "history:request-sessions",
+  historyRequestSessionDetail: "history:request-session-detail",
+  historyDeleteSession: "history:delete-session",
+  historyDeleteAllSessions: "history:delete-all-sessions",
+  historyRequestClose: "history:request-close",
 } as const;

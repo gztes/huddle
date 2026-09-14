@@ -70,8 +70,32 @@ interface HuddleCaptureApi {
   reportCaptureFailed(source: string, errorMessage: string): void;
 }
 
+interface HuddleSessionSummary {
+  sessionId: string;
+  startedAtMs: number;
+  updatedAtMs: number;
+  lineCount: number;
+  previewText: string;
+}
+
+interface HuddleStoredSession {
+  sessionId: string;
+  startedAtMs: number;
+  updatedAtMs: number;
+  lines: HuddleTranscriptLine[];
+}
+
+interface HuddleHistoryApi {
+  requestSessions(): Promise<HuddleSessionSummary[]>;
+  requestSessionDetail(sessionId: string): Promise<HuddleStoredSession | null>;
+  deleteSession(sessionId: string): void;
+  deleteAllSessions(): void;
+  requestClose(): void;
+}
+
 interface Window {
   huddleOverlay: HuddleOverlayApi;
   huddleCapture: HuddleCaptureApi;
   huddleSettings: HuddleSettingsApi;
+  huddleHistory: HuddleHistoryApi;
 }
