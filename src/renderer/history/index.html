@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'"
+    />
+    <title>Huddle History</title>
+    <link rel="stylesheet" href="history.css" />
+  </head>
+  <body>
+    <div id="history-card">
+      <header id="history-header">
+        <button id="back-button" type="button" class="icon-button is-hidden">← Back</button>
+        <h1 id="history-title">History</h1>
+        <button id="close-button" type="button" aria-label="Close">✕</button>
+      </header>
+
+      <div id="history-body">
+        <!-- ------------------------------------------------------- list view -->
+        <section id="session-list-view">
+          <p id="empty-state" class="is-hidden">
+            No sessions yet — history is saved from the next call Huddle hears
+            anything on.
+          </p>
+          <div id="session-list"></div>
+        </section>
+
+        <!-- ----------------------------------------------------- detail view -->
+        <section id="session-detail-view" class="is-hidden">
+          <p id="detail-date"></p>
+          <div id="detail-transcript"></div>
+        </section>
+      </div>
+
+      <footer id="history-footer">
+        <button id="delete-session-button" type="button" class="secondary-button is-hidden">
+          Delete this session
+        </button>
+        <button id="delete-all-button" type="button" class="secondary-button">Delete all history</button>
+      </footer>
+    </div>
+
+    <script src="history.js"></script>
+  </body>
+</html>

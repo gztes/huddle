@@ -24,6 +24,7 @@ function startHuddle(): void {
       isListeningEnabled: () => callManager.isListeningEnabled(),
       onToggleListening: (isEnabled) => callManager.setListeningEnabled(isEnabled),
       onOpenSettings: () => callManager.openSettings(),
+      onOpenHistory: () => callManager.openHistory(),
     });
 
     callManager.start();

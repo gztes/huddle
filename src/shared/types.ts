@@ -62,3 +62,26 @@ export interface SettingsState {
   contextWindowMinutes: number;
   transcriptRetentionMinutes: number;
 }
+
+/**
+ * A full, never-trimmed call session, persisted to disk — separate from
+ * TranscriptStore's rolling in-memory window, which is only for live
+ * suggestion context and keeps getting trimmed. One file per session under
+ * userData/sessions/, local-only, never uploaded anywhere.
+ */
+export interface StoredSession {
+  sessionId: string;
+  startedAtMs: number;
+  updatedAtMs: number;
+  lines: TranscriptLine[];
+}
+
+/** The lightweight row shown in the History window's session list. */
+export interface SessionSummary {
+  sessionId: string;
+  startedAtMs: number;
+  updatedAtMs: number;
+  lineCount: number;
+  /** First transcript line's text, truncated — stands in for a title. */
+  previewText: string;
+}

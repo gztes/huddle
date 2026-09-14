@@ -75,14 +75,22 @@ the Settings window takes over from then on.
 
 - Both audio channels are transcribed **locally** — Whisper runs on-device,
   the same as Clicky. No audio ever leaves the machine.
-- The transcript lives only in memory and is dropped after
-  `HUDDLE_TRANSCRIPT_RETENTION_MINUTES` (default 30) — nothing is written to
-  disk, and nothing survives a restart.
+- The **live** transcript (what suggestions are grounded in) lives only in
+  memory and is dropped after `HUDDLE_TRANSCRIPT_RETENTION_MINUTES` (default
+  30) — that part never touches disk.
+- **Session history is different, deliberately**: every session is also
+  written to a local JSON file (`userData/sessions/`) so you can browse past
+  calls from the tray → History. This survives a restart — a real change
+  from the original "nothing survives a restart" stance. It is still
+  **local-only**: nothing in history is ever uploaded anywhere, and you can
+  delete a single session or all of it from the History window.
 - Only the lines you explicitly ask about (via the hotkey) are ever sent to
-  Gemini, as plain text.
+  Gemini, as plain text — session history itself is never sent anywhere.
 - The HUD overlay is content-protected (`setContentProtection(true)`, same
   trick as Clicky's cursor) — it's excluded from `desktopCapturer`, so it
   never appears in a screen-share or a recording of the call, on either side.
+  The History and Settings windows are **not** content-protected — they're
+  config/review screens, not meant to be open during a live call.
 - Pause listening any time from the tray icon.
 
 ## v1 scope
@@ -92,10 +100,10 @@ from for the reasoning:
 
 - No screen vision (audio + transcript only)
 - No spoken/TTS output — the overlay is silent, text-only
-- No persistent history across calls (in-memory per session only, for now —
-  see Roadmap)
 - No per-process audio isolation — system-audio capture is the whole output
   device, not just the call app
+- Session boundary is one per app launch — no auto-splitting sessions across
+  a long-running process that outlives multiple calls
 
 ## Roadmap
 
@@ -109,10 +117,12 @@ something closer to a full app, each as its own scoped piece of work:
    the actual API). Skipped a dedicated "define a term" chip — the existing
    free-text question box already covers it ("define X") without needing
    Gemini to guess which term matters.
-3. **Session history** — persisting transcripts across restarts. This is a
-   deliberate change to the privacy stance below: history will stay
-   **local-only** (never uploaded anywhere), but will survive a restart,
-   unlike the current in-memory-only behavior.
+3. ✅ **Session history** — every session (one per app launch) is written
+   incrementally to a local JSON file as it happens, not just on clean quit,
+   so a crash doesn't lose it. Tray → History lists past sessions (date +
+   first-line preview, no AI-generated titles for v1 — that'd mean an extra
+   Gemini call per session) and lets you open one to read the full
+   transcript, or delete a session / all history. Local-only, as agreed.
 4. **Calendar integration** — OAuth against Google Calendar/Outlook to
    pre-load context for upcoming meetings. The biggest, most separate piece;
    built last.
@@ -126,16 +136,19 @@ src/
     callManager.ts               # orchestrator — wires capture, overlay, hotkey, Gemini together
     geminiClient.ts              # Gemini SSE streaming + the suggestion system prompt
     transcriptStore.ts           # rolling in-memory transcript, retention window
+    sessionHistory.ts            # full-session archive, one JSON file per app launch
     globalHotkey.ts              # parses "Ctrl+Alt+H" style strings, single-press trigger
     overlayWindow.ts             # the content-protected, resizable HUD window
     settingsWindow.ts            # the Settings window (not content-protected)
+    historyWindow.ts             # the History window (not content-protected)
     captureWindow.ts             # hidden window hosting mic/system-audio capture + VAD + Whisper
-    trayManager.ts               # system tray icon (pause listening, settings, quit)
+    trayManager.ts               # system tray icon (pause listening, history, settings, quit)
     config.ts                    # .env loading, endpoints, persisted preferences/overrides
   preload/                    # contextBridge APIs, one per window type
   renderer/
     overlay/                    # the HUD: transcript log, suggestion, question input
     settings/                   # API key, hotkey rebinding, model, timing fields
+    history/                    # browse/delete past sessions
     capture/                    # mic + system-audio capture, Silero VAD, local Whisper
   shared/                     # types and IPC channel names
 ```

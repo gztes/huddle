@@ -1,0 +1,226 @@
+/*
+ * Same glassmorphic language + tokens as the Settings window.
+ */
+
+:root {
+  --huddle-surface: rgba(16, 17, 16, 0.88);
+  --huddle-surface-2: rgba(255, 255, 255, 0.05);
+  --huddle-border: rgba(255, 255, 255, 0.1);
+  --huddle-border-strong: rgba(255, 255, 255, 0.18);
+  --huddle-text-primary: #f5f6f5;
+  --huddle-text-secondary: #c2c8c5;
+  --huddle-text-tertiary: #868f8b;
+  --huddle-accent: #3380ff;
+  --huddle-them-accent: #ffb264;
+  --huddle-destructive-text: #ff7a7f;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  color: var(--huddle-text-primary);
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+#history-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: 18px;
+  border: 1px solid var(--huddle-border-strong);
+  background: var(--huddle-surface);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  -webkit-app-region: drag;
+}
+
+#history-card * {
+  -webkit-app-region: no-drag;
+}
+
+#history-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--huddle-border);
+}
+
+#history-header h1 {
+  font-size: 14px;
+  font-weight: 700;
+  flex: 1;
+}
+
+#close-button {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--huddle-text-tertiary);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#close-button:hover {
+  background: var(--huddle-surface-2);
+  color: var(--huddle-text-primary);
+}
+
+.icon-button {
+  padding: 4px 10px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--huddle-text-secondary);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  background: var(--huddle-surface-2);
+  color: var(--huddle-text-primary);
+}
+
+#history-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 18px;
+}
+
+#empty-state {
+  padding: 20px 4px;
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--huddle-text-tertiary);
+}
+
+#session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.session-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--huddle-border);
+  background: var(--huddle-surface-2);
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--huddle-text-primary);
+}
+
+.session-row:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: var(--huddle-border-strong);
+}
+
+.session-row .session-date {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--huddle-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.session-row .session-preview {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--huddle-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-row .session-meta {
+  font-size: 10.5px;
+  color: var(--huddle-text-tertiary);
+}
+
+#detail-date {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--huddle-text-tertiary);
+  margin-bottom: 10px;
+}
+
+#detail-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.transcript-line {
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.transcript-line .speaker {
+  font-weight: 700;
+  margin-right: 5px;
+}
+
+.transcript-line.channel-you .speaker {
+  color: var(--huddle-accent);
+}
+
+.transcript-line.channel-them .speaker {
+  color: var(--huddle-them-accent);
+}
+
+.transcript-line .text {
+  color: var(--huddle-text-secondary);
+}
+
+#history-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--huddle-border);
+}
+
+.secondary-button {
+  padding: 8px 16px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--huddle-border-strong);
+  background: transparent;
+  color: var(--huddle-text-secondary);
+}
+
+.secondary-button:hover {
+  background: rgba(255, 122, 127, 0.12);
+  border-color: var(--huddle-destructive-text);
+  color: var(--huddle-destructive-text);
+}
