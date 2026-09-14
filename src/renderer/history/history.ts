@@ -15,6 +15,8 @@
   const emptyStateElement = document.getElementById("empty-state") as HTMLParagraphElement;
   const sessionListElement = document.getElementById("session-list") as HTMLDivElement;
   const detailDateElement = document.getElementById("detail-date") as HTMLParagraphElement;
+  const detailSummarySectionElement = document.getElementById("detail-summary-section") as HTMLElement;
+  const detailSummaryTextElement = document.getElementById("detail-summary-text") as HTMLParagraphElement;
   const detailTranscriptElement = document.getElementById("detail-transcript") as HTMLDivElement;
   const deleteSessionButton = document.getElementById("delete-session-button") as HTMLButtonElement;
   const deleteAllButton = document.getElementById("delete-all-button") as HTMLButtonElement;
@@ -46,7 +48,11 @@
 
         const previewElement = document.createElement("span");
         previewElement.className = "session-preview";
-        previewElement.textContent = session.previewText;
+        // A real summary reads as a title; a raw first-transcript-line fallback
+        // reads as a quote, so it gets a visual cue to tell them apart.
+        previewElement.textContent = session.hasSummary
+          ? session.previewText
+          : `"${session.previewText}"`;
 
         const metaElement = document.createElement("span");
         metaElement.className = "session-meta";
@@ -69,6 +75,10 @@
 
     currentDetailSessionId = sessionId;
     detailDateElement.textContent = formatSessionDate(session.startedAtMs);
+
+    detailSummarySectionElement.classList.toggle("is-hidden", session.summary === null);
+    detailSummaryTextElement.textContent = session.summary ?? "";
+
     detailTranscriptElement.replaceChildren(
       ...session.lines.map((line) => {
         const lineElement = document.createElement("p");

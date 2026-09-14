@@ -50,6 +50,11 @@ export interface OverlayState {
 }
 
 export const AVAILABLE_GEMINI_MODELS = [
+  {
+    identifier: "gemini-3.5-flash-lite",
+    displayName: "3.5 Flash-Lite",
+    description: "cheapest, highest free-tier quota",
+  },
   { identifier: "gemini-2.5-flash", displayName: "2.5 Flash", description: "faster, cheaper" },
   { identifier: "gemini-2.5-pro", displayName: "2.5 Pro", description: "smarter, slower" },
 ] as const;
@@ -74,6 +79,13 @@ export interface StoredSession {
   startedAtMs: number;
   updatedAtMs: number;
   lines: TranscriptLine[];
+  /**
+   * The most recent auto-refresh result (summary + action items), persisted
+   * as the session's "memory" — not a separate Gemini call. Null until the
+   * first auto-refresh happens during the session (e.g. a call shorter than
+   * ~35s never gets one).
+   */
+  summary: string | null;
 }
 
 /** The lightweight row shown in the History window's session list. */
@@ -82,6 +94,7 @@ export interface SessionSummary {
   startedAtMs: number;
   updatedAtMs: number;
   lineCount: number;
-  /** First transcript line's text, truncated — stands in for a title. */
+  /** The stored summary if there is one, else the first transcript line — truncated either way. */
   previewText: string;
+  hasSummary: boolean;
 }

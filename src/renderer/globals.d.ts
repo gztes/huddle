@@ -77,6 +77,7 @@ interface HuddleSessionSummary {
   updatedAtMs: number;
   lineCount: number;
   previewText: string;
+  hasSummary: boolean;
 }
 
 interface HuddleStoredSession {
@@ -84,6 +85,7 @@ interface HuddleStoredSession {
   startedAtMs: number;
   updatedAtMs: number;
   lines: HuddleTranscriptLine[];
+  summary: string | null;
 }
 
 interface HuddleHistoryApi {

@@ -8,6 +8,11 @@
 (function (): void {
   /** Kept in sync with AVAILABLE_GEMINI_MODELS in src/shared/types.ts. */
   const SELECTABLE_GEMINI_MODELS = [
+    {
+      identifier: "gemini-3.5-flash-lite",
+      displayName: "3.5 Flash-Lite",
+      description: "cheapest, highest free-tier quota",
+    },
     { identifier: "gemini-2.5-flash", displayName: "2.5 Flash", description: "faster, cheaper" },
     { identifier: "gemini-2.5-pro", displayName: "2.5 Pro", description: "smarter, slower" },
   ];
