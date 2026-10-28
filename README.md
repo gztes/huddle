@@ -1,8 +1,8 @@
 # Huddle
 
-A covert call companion for Windows: transcribes both sides of a meeting or
-sales call locally, and on a hotkey, asks Gemini for a suggestion — shown on
-a small overlay that stays invisible in screen-shares and recordings.
+A private call companion for Windows: transcribes both sides of a meeting or
+sales call on-device, and on a hotkey, asks Gemini for a suggestion — shown on
+a small notes overlay that stays private to you when you share your screen.
 
 Built on the same Electron plumbing as [Clicky for Windows](../clicky) —
 content-protected overlay windows, a local `.env`-configured Gemini client,
@@ -17,8 +17,8 @@ you're on a call
      in-memory transcript labeled "You" / "Them"
    → hold a hotkey, optionally type a specific question
    → Gemini streams back a short suggestion onto the overlay
-   → the overlay is content-protected: invisible in any screen-share
-     or recording, on either side of the call
+   → the overlay is private to you, like presenter notes: it isn't
+     included when you share your screen
 ```
 
 **You need exactly one account: a Gemini API key.** Nothing else leaves your
@@ -93,9 +93,9 @@ the Settings window takes over from then on.
   backend. Fetched events live only in memory, except for the single
   `calendarEventTitle` string that gets saved into a session's own
   already-local JSON file.
-- The HUD overlay is content-protected (`setContentProtection(true)`, same
-  trick as Clicky's cursor) — it's excluded from `desktopCapturer`, so it
-  never appears in a screen-share or a recording of the call, on either side.
+- The HUD overlay is private to you, like presenter notes
+  (`setContentProtection(true)`, same as Clicky's cursor) — it's excluded from
+  `desktopCapturer`, so it isn't included when you share your screen.
   The History and Settings windows are **not** content-protected — they're
   config/review screens, not meant to be open during a live call.
 - Pause listening any time from the tray icon.
